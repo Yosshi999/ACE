@@ -266,7 +266,7 @@ class ConceptDiscovery(object):
     patch = (mask_expanded * image + (
         1 - mask_expanded) * float(self.average_image_value) / 255)
     ones = np.where(mask == 1)
-    h1, h2, w1, w2 = ones[0].min(), ones[0].max(), ones[1].min(), ones[1].max()
+    h1, h2, w1, w2 = ones[0].min(), ones[0].max() + 1, ones[1].min(), ones[1].max() + 1
     image = Image.fromarray((patch[h1:h2, w1:w2] * 255).astype(np.uint8))
     image_resized = np.array(image.resize(self.image_shape,
                                           Image.BICUBIC)).astype(np.float32) / 255
