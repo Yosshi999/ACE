@@ -5,6 +5,7 @@ ConceptDiscovery class that is able to discover the concepts belonging to one
 of the possible classification labels of the classification task of a network
 and calculate each concept's TCAV score..
 """
+from math import ceil
 from multiprocessing import dummy as multiprocessing
 import sys
 import os
@@ -292,10 +293,10 @@ class ConceptDiscovery(object):
       pool = multiprocessing.Pool(self.num_workers)
       output = pool.map(
           lambda i: self.model.run_imgs(imgs[i * bs:(i + 1) * bs], bottleneck),
-          np.arange(int(imgs.shape[0] / bs) + 1))
+          np.arange(ceil(imgs.shape[0] / bs)))
     else:
       output = []
-      for i in range(int(imgs.shape[0] / bs) + 1):
+      for i in range(ceil(imgs.shape[0] / bs)):
         output.append(
             self.model.run_imgs(imgs[i * bs:(i + 1) * bs], bottleneck))
     output = np.concatenate(output, 0)
