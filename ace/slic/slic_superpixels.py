@@ -8,7 +8,7 @@ from ._slic import (_slic_cython,
 from skimage.color import rgb2lab
 
 
-def slic(image, n_segments=100, compactness=10., max_iter=10, sigma=0,
+def slic(image, mask, n_segments=100, compactness=10., max_iter=10, sigma=0,
          spacing=None, multichannel=True, convert2lab=None,
          enforce_connectivity=True, min_size_factor=0.5, max_size_factor=3,
          slic_zero=False):
@@ -122,6 +122,9 @@ def slic(image, n_segments=100, compactness=10., max_iter=10, sigma=0,
         # Add channel as single last dimension
         image = image[..., np.newaxis]
 
+    if is_2d:
+        mask = mask[np.newaxis, ...]
+
     if spacing is None:
         spacing = np.ones(3)
     elif isinstance(spacing, (list, tuple)):
@@ -169,7 +172,9 @@ def slic(image, n_segments=100, compactness=10., max_iter=10, sigma=0,
 
     image = np.ascontiguousarray(image * ratio)
 
-    labels = _slic_cython(image, segments, step, max_iter, spacing, slic_zero)
+    mask = np.ascontiguousarray(mask)
+
+    labels = _slic_cython(image, mask, segments, step, max_iter, spacing, slic_zero)
 
     if enforce_connectivity:
         segment_size = depth * height * width / n_segments

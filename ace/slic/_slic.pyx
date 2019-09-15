@@ -11,6 +11,7 @@ from skimage.util import regular_grid
 
 
 def _slic_cython(double[:, :, :, ::1] image_zyx,
+                 bint[:, :, ::1] mask,
                  double[:, ::1] segments,
                  float step,
                  Py_ssize_t max_iter,
@@ -79,7 +80,7 @@ def _slic_cython(double[:, :, :, ::1] image_zyx,
                               for s in slices]
 
     cdef Py_ssize_t[:, :, ::1] nearest_segments \
-        = np.empty((depth, height, width), dtype=np.intp)
+        = np.full((depth, height, width), -1, dtype=np.intp)
     cdef double[:, :, ::1] distance \
         = np.empty((depth, height, width), dtype=np.double)
     cdef Py_ssize_t[::1] n_segment_elems = np.zeros(n_segments, dtype=np.intp)
@@ -129,6 +130,8 @@ def _slic_cython(double[:, :, :, ::1] image_zyx,
                         dy = sy * (cy - y)
                         dy *= dy
                         for x in range(x_min, x_max):
+                            if not mask[z, y, x]:
+                                continue
                             dx = sx * (cx - x)
                             dx *= dx
                             dist_center = (dz + dy + dx) * spatial_weight
@@ -158,6 +161,8 @@ def _slic_cython(double[:, :, :, ::1] image_zyx,
             for z in range(depth):
                 for y in range(height):
                     for x in range(width):
+                        if not mask[z, y, x]:
+                            continue
                         k = nearest_segments[z, y, x]
                         n_segment_elems[k] += 1
                         segments[k, 0] += z
@@ -176,6 +181,8 @@ def _slic_cython(double[:, :, :, ::1] image_zyx,
                 for z in range(depth):
                     for y in range(height):
                         for x in range(width):
+                            if not mask[z, y, x]:
+                                continue
 
                             k = nearest_segments[z, y, x]
                             dist_color = 0
@@ -243,7 +250,7 @@ def _enforce_label_connectivity_cython(Py_ssize_t[:, :, ::1] segments,
         for z in range(depth):
             for y in range(height):
                 for x in range(width):
-                    if connected_segments[z, y, x] >= 0:
+                    if segments[z, y, x] == -1 or connected_segments[z, y, x] >= 0:
                         continue
                     # find the component size
                     adjacent = 0
