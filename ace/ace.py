@@ -195,24 +195,24 @@ class ConceptDiscovery(object):
     if param_dict is None:
       param_dict = {}
     if method == 'slic':
-      n_segmentss = param_dict.pop('n_segments', [15, 50, 80])
+      n_segmentss = param_dict.get('n_segments', [15, 50, 80])
       n_params = len(n_segmentss)
-      compactnesses = param_dict.pop('compactness', [20] * n_params)
-      sigmas = param_dict.pop('sigma', [1.] * n_params)
+      compactnesses = param_dict.get('compactness', [20] * n_params)
+      sigmas = param_dict.get('sigma', [1.] * n_params)
     elif method == 'watershed':
-      markerss = param_dict.pop('marker', [15, 50, 80])
+      markerss = param_dict.get('marker', [15, 50, 80])
       n_params = len(markerss)
-      compactnesses = param_dict.pop('compactness', [0.] * n_params)
+      compactnesses = param_dict.get('compactness', [0.] * n_params)
     elif method == 'quickshift':
-      max_dists = param_dict.pop('max_dist', [20, 15, 10])
+      max_dists = param_dict.get('max_dist', [20, 15, 10])
       n_params = len(max_dists)
-      ratios = param_dict.pop('ratio', [1.0] * n_params)
-      kernel_sizes = param_dict.pop('kernel_size', [10] * n_params)
+      ratios = param_dict.get('ratio', [1.0] * n_params)
+      kernel_sizes = param_dict.get('kernel_size', [10] * n_params)
     elif method == 'felzenszwalb':
-      scales = param_dict.pop('scale', [1200, 500, 250])
+      scales = param_dict.get('scale', [1200, 500, 250])
       n_params = len(scales)
-      sigmas = param_dict.pop('sigma', [0.8] * n_params)
-      min_sizes = param_dict.pop('min_size', [20] * n_params)
+      sigmas = param_dict.get('sigma', [0.8] * n_params)
+      min_sizes = param_dict.get('min_size', [20] * n_params)
     else:
       raise ValueError('Invalid superpixel method!')
     unique_masks = []
@@ -336,7 +336,7 @@ class ConceptDiscovery(object):
       param_dict = {}
     centers = None
     if method == 'KM':
-      n_clusters = param_dict.pop('n_clusters', 25)
+      n_clusters = param_dict.get('n_clusters', 25)
       km = cluster.KMeans(n_clusters)
       d = km.fit(acts)
       centers = km.cluster_centers_
@@ -344,7 +344,7 @@ class ConceptDiscovery(object):
           np.expand_dims(acts, 1) - np.expand_dims(centers, 0), ord=2, axis=-1)
       asg, cost = np.argmin(d, -1), np.min(d, -1)
     elif method == 'AP':
-      damping = param_dict.pop('damping', 0.5)
+      damping = param_dict.get('damping', 0.5)
       ca = cluster.AffinityPropagation(damping)
       ca.fit(acts)
       centers = ca.cluster_centers_
@@ -355,13 +355,13 @@ class ConceptDiscovery(object):
       ms = cluster.MeanShift(n_jobs=self.num_workers)
       asg = ms.fit_predict(acts)
     elif method == 'SC':
-      n_clusters = param_dict.pop('n_clusters', 25)
+      n_clusters = param_dict.get('n_clusters', 25)
       sc = cluster.SpectralClustering(
           n_clusters=n_clusters, n_jobs=self.num_workers)
       asg = sc.fit_predict(acts)
     elif method == 'DB':
-      eps = param_dict.pop('eps', 0.5)
-      min_samples = param_dict.pop('min_samples', 20)
+      eps = param_dict.get('eps', 0.5)
+      min_samples = param_dict.get('min_samples', 20)
       sc = cluster.DBSCAN(eps, min_samples, n_jobs=self.num_workers)
       asg = sc.fit_predict(acts)
     else:
