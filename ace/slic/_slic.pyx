@@ -7,7 +7,7 @@ from libc.float cimport DBL_MAX
 import numpy as np
 cimport numpy as cnp
 
-from ..util import regular_grid
+from skimage.util import regular_grid
 
 
 def _slic_cython(double[:, :, :, ::1] image_zyx,
