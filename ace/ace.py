@@ -245,7 +245,7 @@ class ConceptDiscovery(object):
         segments = segmentation.felzenszwalb(
             img, scale=scales[i], sigma=sigmas[i], min_size=min_sizes[i])
       logger.debug('n_segment: {}'.format(segments.max()+1))
-      for s in range(segments.max()):
+      for s in range(segments.max()+1):
         mask = (segments == s).astype(np.float32)
         if np.mean(mask) > 0.001:
           unique = True
