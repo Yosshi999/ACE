@@ -11,7 +11,7 @@ from skimage.util import regular_grid
 
 
 def _slic_cython(double[:, :, :, ::1] image_zyx,
-                 bint[:, :, ::1] mask,
+                 cnp.ndarray[cnp.npy_bool, cast=True, ndim=3, mode='c'] mask,
                  double[:, ::1] segments,
                  float step,
                  Py_ssize_t max_iter,
