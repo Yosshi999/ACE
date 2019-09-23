@@ -55,7 +55,7 @@ class CAV(object):
     Returns:
       CAV instance.
     """
-    with tf.gfile.Open(cav_path) as pkl_file:
+    with tf.gfile.Open(cav_path, 'rb') as pkl_file:
       save_dict = pickle.load(pkl_file)
 
     cav = CAV(save_dict['concepts'], save_dict['bottleneck'],
@@ -224,7 +224,7 @@ class CAV(object):
         'saved_path': self.save_path
     }
     if self.save_path is not None:
-      with tf.gfile.Open(self.save_path, 'w') as pkl_file:
+      with tf.gfile.Open(self.save_path, 'wb') as pkl_file:
         pickle.dump(save_dict, pkl_file)
     else:
       tf.logging.info('save_path is None. Not saving anything')

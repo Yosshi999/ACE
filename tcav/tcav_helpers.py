@@ -88,7 +88,7 @@ def load_image_from_file(filename, shape):
     tf.logging.error('Cannot find file: {}'.format(filename))
     return None
   try:
-    img = np.array(PIL.Image.open(tf.gfile.Open(filename)).resize(
+    img = np.array(PIL.Image.open(filename).resize(
         shape, PIL.Image.BILINEAR))
     # Normalize pixel values to between 0 and 1.
     img = np.float32(img) / 255.0

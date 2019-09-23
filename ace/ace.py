@@ -468,11 +468,11 @@ class ConceptDiscovery(object):
     if not tf.gfile.Exists(rnd_acts_path):
       rnd_imgs = self.load_concept_imgs(random_concept, self.max_imgs)
       acts = tcav_helpers.get_acts_from_images(rnd_imgs, self.model, bottleneck)
-      with tf.gfile.Open(rnd_acts_path, 'w') as f:
+      with tf.gfile.Open(rnd_acts_path, 'wb') as f:
         np.save(f, acts, allow_pickle=False)
       del acts
       del rnd_imgs
-    with tf.gfile.Open(rnd_acts_path, 'r') as f:
+    with tf.gfile.Open(rnd_acts_path, 'rb') as f:
       return np.load(f).squeeze()
 
   def _calculate_cav(self, c, r, bn, act_c, ow, directory=None):
