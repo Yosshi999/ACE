@@ -232,7 +232,7 @@ class ConceptDiscovery(object):
         segments = segmentation.felzenszwalb(
             img, scale=scales[i], sigma=sigmas[i], min_size=min_sizes[i])
       for s in range(segments.max()):
-        mask = (segments == s).astype(float)
+        mask = (segments == s).astype(np.float32)
         if np.mean(mask) > 0.001:
           unique = True
           for seen_mask in unique_masks:
@@ -269,7 +269,7 @@ class ConceptDiscovery(object):
     h1, h2, w1, w2 = ones[0].min(), ones[0].max(), ones[1].min(), ones[1].max()
     image = Image.fromarray((patch[h1:h2, w1:w2] * 255).astype(np.uint8))
     image_resized = np.array(image.resize(self.image_shape,
-                                          Image.BICUBIC)).astype(float) / 255
+                                          Image.BICUBIC)).astype(np.float32) / 255
     return image_resized, patch
 
   def _patch_activations(self, imgs, bottleneck, bs=100, channel_mean=None):
