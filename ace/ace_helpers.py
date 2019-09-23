@@ -5,7 +5,7 @@ import sys
 import os
 from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
-import model
+from tcav import model
 import numpy as np
 from PIL import Image
 from skimage.segmentation import mark_boundaries
@@ -337,8 +337,7 @@ def save_ace_report(cd, accs, scores, address):
     for concept in cd.dic[bn]['concepts']:
       report += '\n' + bn + ':' + concept + ':' + str(
           np.mean(accs[bn][concept]))
-  save_report(address, report)
-  report = '\n\n\t\t\t ---TCAV scores---'
+  report += '\n\n\t\t\t ---TCAV scores---'
   for bn in cd.bottlenecks:
     report += '\n'
     for concept in cd.dic[bn]['concepts']:
@@ -346,7 +345,7 @@ def save_ace_report(cd, accs, scores, address):
           scores[bn][concept], scores[bn][cd.random_concept])
       report += '\n{}:{}:{},{}'.format(bn, concept,
                                        np.mean(scores[bn][concept]), pvalue)
-  with tf.gfile.open(address, 'w') as f:
+  with tf.gfile.Open(address, 'w') as f:
     f.write(report)
 
 
