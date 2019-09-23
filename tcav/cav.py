@@ -23,7 +23,7 @@ from sklearn import linear_model
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-import utils as utils
+from tcav import utils
 
 
 class CAV(object):
