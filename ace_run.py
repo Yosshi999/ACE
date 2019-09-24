@@ -8,8 +8,8 @@ import sklearn.metrics as metrics
 from tcav import utils
 import tensorflow as tf
 
-import ace_helpers
-from ace import ConceptDiscovery
+from ace import ace_helpers
+from ace.ace import ConceptDiscovery
 import argparse
 
 
