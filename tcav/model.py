@@ -152,7 +152,7 @@ class PublicModelWrapper(ModelWrapper):
                                                 endpoints_dict,
                                                 self.image_value_range,
                                                 scope=scope)
-    self.bottlenecks_tensors = PublicModelWrapper.get_bottleneck_tensors(scope)
+    self.bottlenecks_tensors = self.get_bottleneck_tensors(scope)
     self.image_shape = image_shape
     graph = tf.get_default_graph()
 
