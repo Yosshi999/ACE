@@ -277,3 +277,32 @@ class InceptionV3Wrapper_public(PublicModelWrapper):
                                                   endpoints_v3,
                                                   scope='v3')
     self.model_name = 'InceptionV3_public'
+
+
+class InceptionV3Wrapper(PublicModelWrapper):
+  def __init__(self, sess, model_saved_path, labels_path):
+    self.image_value_range = (-117, 255-117)
+    image_shape_v3 = [299, 299, 3]
+    endpoints_v3 = dict(
+        input='Placeholder:0',
+        prediction='Softmax:0',
+    )
+
+    self.sess = sess
+    super().__init__(sess,
+                     model_saved_path,
+                     labels_path,
+                     image_shape_v3,
+                     endpoints_v3,
+                     scope='v3')
+    self.model_name = 'InceptionV3'
+
+  @staticmethod
+  def get_bottleneck_tensors(scope):
+    graph = tf.get_default_graph()
+    bn_endpoints = {}
+    for op in graph.get_operations():
+      if op.name.startswith(scope+'/InceptionV3/InceptionV3/') and 'Concat' in op.type:
+        name = op.name.split('/')[3]
+        bn_endpoints[name] = op.outputs[0]
+    return bn_endpoints
