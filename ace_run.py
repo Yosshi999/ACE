@@ -10,6 +10,7 @@ import tensorflow as tf
 
 from ace import ace_helpers
 from ace.ace import ConceptDiscovery
+import ace.config
 import argparse
 
 
@@ -18,7 +19,6 @@ def main(args):
   source_dir = args.source_dir
   test_dir = args.test_dir
   working_dir = args.working_dir
-  model_to_run = args.model_to_run
   target_class = args.target_class
   bottlenecks = args.bottlenecks.split(',')
   num_test = args.num_test
@@ -41,7 +41,7 @@ def main(args):
   tf.gfile.MakeDirs(results_summaries_dir)
   random_concept = 'random500_100'  # Random concept for statistical testing
   sess = utils.create_session()
-  mymodel = ace_helpers.make_model(model_to_run, sess)
+  mymodel = ace_helpers.make_model(args.config.model, sess)
   # Creating the ConceptDiscovery class instance
   cd = ConceptDiscovery(
       mymodel,
@@ -129,6 +129,7 @@ def main(args):
 def parse_arguments(argv):
   """Parses the arguments passed to the run.py script."""
   parser = argparse.ArgumentParser()
+  parser.add_argument('--config', type=ace.config.load, required=True)
   parser.add_argument('--source_dir', type=str,
       help='''Directory where the network's classes image folders and random
       concept folders are saved.''', default='./Imagenet_train')
@@ -137,8 +138,6 @@ def parse_arguments(argv):
       concept folders are saved.''', default='./Imagenet_test')
   parser.add_argument('--working_dir', type=str,
       help='Directory to save the results.', default='./ACE')
-  parser.add_argument('--model_to_run', type=str,
-      help='The name of the model.', default='InceptionV3')
   parser.add_argument('--target_class', type=str,
       help='The name of the target class to be interpreted', default='Zebra')
   parser.add_argument('--bottlenecks', type=str,

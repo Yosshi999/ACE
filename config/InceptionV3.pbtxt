@@ -1,0 +1,5 @@
+model {
+  model_wrapper_class: 'InceptionV3Wrapper'
+  model_path: 'PATH_TO_BE_CONFIGURED.pb'
+  labels_path: 'PATH_TO_BE_CONFIGURED.txt'
+}

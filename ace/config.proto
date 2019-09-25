@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message Config {
+  message Model {
+    string model_wrapper_class = 1;
+    string model_path = 2;
+    string labels_path = 3;
+  }
+  Model model = 1;
+}
