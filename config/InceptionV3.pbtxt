@@ -3,3 +3,8 @@ model {
   model_path: 'PATH_TO_BE_CONFIGURED.pb'
   labels_path: 'PATH_TO_BE_CONFIGURED.txt'
 }
+source_dir: 'PATH_TO_BE_CONFIGURED'
+test_dir: 'PATH_TO_BE_CONFIGURED'
+target_class: 'zebra'
+bottlenecks: 'Mixed_7a'
+max_imgs: 40

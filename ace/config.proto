@@ -7,4 +7,21 @@ message Config {
     string labels_path = 3;
   }
   Model model = 1;
+
+  // Directory where the network's classes train image folders and random concept folders are saved.
+  string source_dir = 2;
+
+  // Directory where the network's classes test image folders and random concept folders are saved.
+  string test_dir = 3;
+
+  int32 num_workers = 4;
+
+  // The name of the target class to be interpreted.
+  string target_class = 5;
+
+  // Names of the target layers of the network.
+  repeated string bottlenecks = 6;
+
+  // Maximum number of images in a discovered concept.
+  int32 max_imgs = 7;
 }

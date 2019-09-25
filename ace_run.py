@@ -16,14 +16,14 @@ import argparse
 
 def main(args):
 
-  source_dir = args.source_dir
-  test_dir = args.test_dir
+  source_dir = args.config.source_dir
+  test_dir = args.config.test_dir
   working_dir = args.working_dir
-  target_class = args.target_class
-  bottlenecks = args.bottlenecks.split(',')
+  target_class = args.config.target_class
+  bottlenecks = list(args.config.bottlenecks)
   num_test = args.num_test
   num_random_exp = args.num_random_exp
-  max_imgs = args.max_imgs
+  max_imgs = args.config.max_imgs
   min_imgs = args.min_imgs
   ###### related DIRs on CNS to store results #######
   discovered_concepts_dir = os.path.join(working_dir, 'concepts/')
@@ -57,7 +57,7 @@ def main(args):
       max_imgs=max_imgs,
       min_imgs=min_imgs,
       num_discovery_imgs=max_imgs,
-      num_workers=25)
+      num_workers=args.config.num_workers)
   # Creating the dataset of image patches
   cd.create_patches(param_dict={'n_segments': [15, 50, 80]})
   # Saving the concept discovery target class images
@@ -130,28 +130,14 @@ def parse_arguments(argv):
   """Parses the arguments passed to the run.py script."""
   parser = argparse.ArgumentParser()
   parser.add_argument('--config', type=ace.config.load, required=True)
-  parser.add_argument('--source_dir', type=str,
-      help='''Directory where the network's classes image folders and random
-      concept folders are saved.''', default='./Imagenet_train')
-  parser.add_argument('--test_dir', type=str,
-      help='''Directory where the network's classes test image folders and random
-      concept folders are saved.''', default='./Imagenet_test')
   parser.add_argument('--working_dir', type=str,
       help='Directory to save the results.', default='./ACE')
-  parser.add_argument('--target_class', type=str,
-      help='The name of the target class to be interpreted', default='Zebra')
-  parser.add_argument('--bottlenecks', type=str,
-      help='Names of the target layers of the network (comma separated)',
-                      default='mixed_8')
   parser.add_argument('--num_test', type=int,
       help="Number of test images used for binary profile classifier",
                       default=20)
   parser.add_argument('--num_random_exp', type=int,
       help="Number of random experiments used for statistical testing, etc",
                       default=20)
-  parser.add_argument('--max_imgs', type=int,
-      help="Maximum number of images in a discovered concept",
-                      default=40)
   parser.add_argument('--min_imgs', type=int,
       help="Minimum number of images in a discovered concept",
                       default=40)
