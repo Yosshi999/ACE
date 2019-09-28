@@ -39,7 +39,7 @@ def main(args):
   tf.gfile.MakeDirs(cavs_dir)
   tf.gfile.MakeDirs(activations_dir)
   tf.gfile.MakeDirs(results_summaries_dir)
-  random_concept = 'random500_100'  # Random concept for statistical testing
+  random_concept = 'random500_{}'.format(num_random_exp)  # Random concept for statistical testing
   sess = utils.create_session()
   mymodel = ace_helpers.make_model(args.config.model, sess)
   # Creating the ConceptDiscovery class instance
@@ -87,7 +87,7 @@ def main(args):
   report += '\n\t ---Classifier Weights---\n\n'
   pos_imgs = cd.load_concept_imgs(cd.target_class,
                                   2 * cd.max_imgs + num_test)[-num_test:]
-  neg_imgs = cd.load_concept_imgs('random500_180', num_test)
+  neg_imgs = cd.load_concept_imgs('random500_{}'.format(num_random_exp+1), num_test)
   a = ace_helpers.flat_profile(cd, pos_imgs)
   b = ace_helpers.flat_profile(cd, neg_imgs)
   lm, _ = ace_helpers.cross_val(a, b, methods=['logistic'])
@@ -98,7 +98,7 @@ def main(args):
   # Test profile classifier on test images
   cd.source_dir = test_dir
   pos_imgs = cd.load_concept_imgs(cd.target_class, num_test)
-  neg_imgs = cd.load_concept_imgs('random500_180', num_test)
+  neg_imgs = cd.load_concept_imgs('random500_{}'.format(num_random_exp+1), num_test)
   a = ace_helpers.flat_profile(cd, pos_imgs)
   b = ace_helpers.flat_profile(cd, neg_imgs)
   x, y = ace_helpers.binary_dataset(a, b, balanced=True)
