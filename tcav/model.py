@@ -165,7 +165,7 @@ class PublicModelWrapper(ModelWrapper):
           tf.nn.softmax_cross_entropy_with_logits(
               labels=tf.one_hot(self.y_input,
                                 self.ends['prediction'].get_shape().as_list()[1]),
-              logits=self.pred))
+              logits=self.ends['logit']))
     self._make_gradient_tensors()
 
   def id_to_label(self, idx):
