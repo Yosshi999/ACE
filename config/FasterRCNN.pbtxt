@@ -1,0 +1,10 @@
+model {
+  model_wrapper_class: 'FasterRCNNWrapper'
+  model_path: 'PATH_TO_BE_CONFIGURED.pb'
+  labels_path: 'PATH_TO_BE_CONFIGURED.txt'
+}
+source_dir: 'PATH_TO_BE_CONFIGURED'
+test_dir: 'PATH_TO_BE_CONFIGURED'
+target_class: 'pedestrian'
+bottlenecks: 'block4_unit_1'
+max_imgs: 1000
