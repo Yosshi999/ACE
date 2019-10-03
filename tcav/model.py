@@ -16,6 +16,7 @@ limitations under the License.
 
 """Model wrapper for TCAV."""
 
+import re
 from abc import ABCMeta
 from abc import abstractmethod
 import numpy as np
@@ -306,3 +307,66 @@ class InceptionV3Wrapper(PublicModelWrapper):
         name = op.name.split('/')[3]
         bn_endpoints[name] = op.outputs[0]
     return bn_endpoints
+
+
+class FasterRCNNWrapper(PublicModelWrapper):
+  def __init__(self, sess, model_saved_path, labels_path):
+    self.image_value_range = None
+    image_shape = [600, 600, 3]
+    endpoints = dict(
+        input='ToFloat_3:0',
+        logit='Squeeze_3:0',
+        boxes='Reshape_5:0',
+        box_ind='Reshape_6:0',
+    )
+
+    self.sess = sess
+    super().__init__(sess,
+                     model_saved_path,
+                     labels_path,
+                     image_shape,
+                     endpoints,
+                     scope='FasterRCNN')
+    self.model_name = 'Faster R-CNN'
+
+  def get_gradient(self, acts, y, bottleneck_name):
+    return self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
+        self.bottlenecks_tensors[bottleneck_name]: acts,
+        self.y_input: y,
+        self.ends['boxes']: np.tile(np.array([0, 0, 1, 1], dtype=np.float32), (len(y), 1)),
+        self.ends['box_ind']: np.arange(len(y), dtype=np.int32),
+    })
+
+  def run_imgs(self, imgs, bottleneck_name):
+    return self.sess.run(self.bottlenecks_tensors[bottleneck_name], {
+        self.ends['input']: imgs * 255,
+        self.ends['boxes']: np.tile(np.array([0, 0, 1, 1], dtype=np.float32), (len(imgs), 1)),
+        self.ends['box_ind']: np.arange(len(imgs), dtype=np.int32),
+    })
+
+  @staticmethod
+  def get_bottleneck_tensors(scope):
+    graph = tf.get_default_graph()
+    bn_endpoints = {}
+    for op in graph.get_operations():
+      match = re.fullmatch(scope+r'/SecondStageFeatureExtractor/resnet_v1_101/(block4/unit_\d)/bottleneck_v1/Relu', op.name)
+      if match:
+        name = match.group(1).replace('/', '_')
+        bn_endpoints[name] = op.outputs[0]
+    return bn_endpoints
+
+  @staticmethod
+  def import_graph(saved_path, image_shape, endpoints, image_value_range, scope='import'):
+    graph = tf.Graph()
+    assert graph.unique_name(scope, False) == scope, (
+        'Scope "%s" already exists. Provide explicit scope names when '
+        'importing multiple instances of the model.') % scope
+
+    graph_def = tf.GraphDef.FromString(tf.gfile.Open(saved_path, 'rb').read())
+
+    with tf.name_scope(scope) as sc:
+      myendpoints = tf.import_graph_def(
+          graph_def, None, endpoints.values(), name=sc)
+      myendpoints = dict(zip(endpoints.keys(), myendpoints))
+      myendpoints['prediction'] = tf.nn.softmax(myendpoints['logit'])
+    return myendpoints
