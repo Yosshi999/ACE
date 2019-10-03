@@ -147,11 +147,11 @@ class PublicModelWrapper(ModelWrapper):
                endpoints_dict,
                scope):
     self.labels = tf.gfile.Open(labels_path).read().splitlines()
-    self.ends = PublicModelWrapper.import_graph(model_fn_path,
-                                                image_shape,
-                                                endpoints_dict,
-                                                self.image_value_range,
-                                                scope=scope)
+    self.ends = self.import_graph(model_fn_path,
+                                  image_shape,
+                                  endpoints_dict,
+                                  self.image_value_range,
+                                  scope=scope)
     self.bottlenecks_tensors = self.get_bottleneck_tensors(scope)
     self.image_shape = image_shape
     graph = tf.get_default_graph()
