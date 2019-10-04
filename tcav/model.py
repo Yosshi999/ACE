@@ -15,12 +15,13 @@ limitations under the License.
 """
 
 """Model wrapper for TCAV."""
-
 import re
 from abc import ABCMeta
 from abc import abstractmethod
+
 import numpy as np
 import tensorflow as tf
+
 
 class ModelWrapper(object):
   """Simple wrapper of the for models with session object for TCAV.

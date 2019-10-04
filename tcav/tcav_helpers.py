@@ -15,15 +15,13 @@ limitations under the License.
 """
 
 """ collection of various helper functions for TCAV"""
-
-from multiprocessing import dummy as multiprocessing
 import os.path
-import re
-import numpy as np
+from multiprocessing import dummy as multiprocessing
+
 import PIL.Image
-import scipy.stats as stats
+import numpy as np
 import tensorflow as tf
-import json
+
 
 # General helper functions
 

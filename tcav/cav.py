@@ -18,11 +18,13 @@ limitations under the License.
 Class for constructing concept activation vector (CAV) for TCAV """
 import os.path
 import pickle
+
 import numpy as np
+import tensorflow as tf
 from sklearn import linear_model
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
-import tensorflow as tf
+
 from tcav import utils
 
 
