@@ -10,3 +10,6 @@ resize_patches: true
 target_class: 'zebra'
 bottlenecks: 'Mixed_7a'
 max_imgs: 40
+slic {
+  n_segments: [15, 50, 80]
+}

@@ -26,4 +26,11 @@ message Config {
 
   // Maximum number of images in a discovered concept.
   int32 max_imgs = 9;
+
+  message Slic {
+    repeated int32 n_segments = 1;
+  }
+  oneof superpixel_method {
+    Slic slic = 10;
+  }
 }

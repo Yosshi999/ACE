@@ -10,3 +10,6 @@ resize_patches: false
 target_class: 'pedestrian'
 bottlenecks: 'block4_unit_1'
 max_imgs: 1000
+slic {
+  n_segments: [5, 10, 15]
+}

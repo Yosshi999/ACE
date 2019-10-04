@@ -61,7 +61,7 @@ def main(args):
       resize_images=args.config.resize_images,
       resize_patches=args.config.resize_patches)
   # Creating the dataset of image patches
-  cd.create_patches(param_dict={'n_segments': [15, 50, 80]})
+  cd.create_patches(param_dict={'n_segments': list(args.config.slic.n_segments)})
   # Saving the concept discovery target class images
   image_dir = os.path.join(discovered_concepts_dir, 'images')
   tf.gfile.MakeDirs(image_dir)
