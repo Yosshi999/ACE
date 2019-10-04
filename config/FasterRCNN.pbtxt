@@ -4,7 +4,6 @@ model {
   labels_path: 'PATH_TO_BE_CONFIGURED.txt'
 }
 source_dir: 'PATH_TO_BE_CONFIGURED'
-test_dir: 'PATH_TO_BE_CONFIGURED'
 resize_images: false
 resize_patches: false
 target_class: 'pedestrian'

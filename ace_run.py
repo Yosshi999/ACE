@@ -5,8 +5,6 @@ import os
 import sys
 
 import logzero
-import numpy as np
-import sklearn.metrics as metrics
 import tensorflow as tf
 
 import ace.config
@@ -82,18 +80,11 @@ def main(args):
       resize_patches=args.config.resize_patches)
   # Creating the dataset of image patches
   cd.create_patches(param_dict={'n_segments': list(args.config.slic.n_segments)})
-  # Saving the concept discovery target class images
-  image_dir = os.path.join(discovered_concepts_dir, 'images')
-  tf.gfile.MakeDirs(image_dir)
-  ace_helpers.save_images(image_dir,
-                            (cd.discovery_images * 256).astype(np.uint8))
   # Discovering Concepts
   cd.discover_concepts(method='KM', param_dicts={'n_clusters': 25})
   del cd.dataset  # Free memory
   del cd.image_numbers
   del cd.patches
-  # Save discovered concept images (resized and original sized)
-  ace_helpers.save_concepts(cd, discovered_concepts_dir)
   # Calculating CAVs and TCAV scores
   cav_accuraciess = cd.cavs(min_acc=0.0)
   scores = cd.tcavs(test=False)
@@ -102,51 +93,6 @@ def main(args):
   # Plot examples of discovered concepts
   for bn in cd.bottlenecks:
     ace_helpers.plot_concepts(cd, bn, 10, address=results_dir)
-  # Delete concepts that don't pass statistical testing
-  cd.test_and_remove_concepts(scores)
-  # Train a binary classifier on concept profiles
-  report = '\n\n\t\t\t ---Concept space---'
-  report += '\n\t ---Classifier Weights---\n\n'
-  pos_imgs = cd.load_concept_imgs(cd.target_class,
-                                  2 * cd.max_imgs + num_test)[-num_test:]
-  neg_imgs = cd.load_concept_imgs('random500_{}'.format(num_random_exp+1), num_test)
-  a = ace_helpers.flat_profile(cd, pos_imgs)
-  b = ace_helpers.flat_profile(cd, neg_imgs)
-  lm, _ = ace_helpers.cross_val(a, b, methods=['logistic'])
-  for bn in cd.bottlenecks:
-    report += bn + ':\n'
-    for i, concept in enumerate(cd.dic[bn]['concepts']):
-      report += concept + ':' + str(lm.coef_[-1][i]) + '\n'
-  # Test profile classifier on test images
-  cd.source_dir = test_dir
-  pos_imgs = cd.load_concept_imgs(cd.target_class, num_test)
-  neg_imgs = cd.load_concept_imgs('random500_{}'.format(num_random_exp+1), num_test)
-  a = ace_helpers.flat_profile(cd, pos_imgs)
-  b = ace_helpers.flat_profile(cd, neg_imgs)
-  x, y = ace_helpers.binary_dataset(a, b, balanced=True)
-  probs = lm.predict_proba(x)[:, 1]
-  report += '\nProfile Classifier accuracy= {}'.format(
-      np.mean((probs > 0.5) == y))
-  report += '\nProfile Classifier AUC= {}'.format(
-      metrics.roc_auc_score(y, probs))
-  report += '\nProfile Classifier PR Area= {}'.format(
-      metrics.average_precision_score(y, probs))
-  # Compare original network to profile classifier
-  target_id = cd.model.label_to_id(cd.target_class.replace('_', ' '))
-  predictions = []
-  for img in pos_imgs:
-    predictions.append(mymodel.get_predictions([img]))
-  predictions = np.concatenate(predictions, 0)
-  true_predictions = (np.argmax(predictions, -1) == target_id).astype(int)
-  truly_predicted = np.where(true_predictions)[0]
-  report += '\nNetwork Recall = ' + str(np.mean(true_predictions))
-  report += ', ' + str(np.mean(np.max(predictions, -1)[truly_predicted]))
-  agreeableness = np.sum(lm.predict(a) * true_predictions)*1./\
-      np.sum(true_predictions + 1e-10)
-  report += '\nProfile classifier agrees with network in {}%'.format(
-      100 * agreeableness)
-  with tf.gfile.Open(results_summaries_dir + 'profile_classifier.txt', 'w') as f:
-    f.write(report)
 
 def parse_arguments(argv):
   """Parses the arguments passed to the run.py script."""
