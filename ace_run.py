@@ -1,8 +1,10 @@
 """This script runs the whole ACE method."""
 import argparse
+import logging
 import os
 import sys
 
+import logzero
 import numpy as np
 import sklearn.metrics as metrics
 import tensorflow as tf
@@ -11,6 +13,24 @@ import ace.config
 from ace import ace_helpers
 from ace.ace import ConceptDiscovery
 from tcav import utils
+
+
+def setup_logger(working_dir):
+  color_formatter = logzero.LogFormatter()
+  monochrome_formatter = logzero.LogFormatter(color=False)
+
+  stream_handler = logging.StreamHandler()
+  stream_handler.setFormatter(color_formatter)
+  color_file_handler = logging.FileHandler(os.path.join(working_dir, 'log.color'))
+  color_file_handler.setFormatter(color_formatter)
+  txt_file_handler = logging.FileHandler(os.path.join(working_dir, 'log.txt'))
+  txt_file_handler.setFormatter(monochrome_formatter)
+
+  logger = logging.getLogger()
+  logger.setLevel(logging.DEBUG)
+  logger.addHandler(stream_handler)
+  logger.addHandler(color_file_handler)
+  logger.addHandler(txt_file_handler)
 
 
 def main(args):
@@ -38,6 +58,7 @@ def main(args):
   tf.gfile.MakeDirs(cavs_dir)
   tf.gfile.MakeDirs(activations_dir)
   tf.gfile.MakeDirs(results_summaries_dir)
+  setup_logger(working_dir)
   random_concept = 'random500_{}'.format(num_random_exp)  # Random concept for statistical testing
   sess = utils.create_session()
   mymodel = ace_helpers.make_model(args.config.model, sess)

@@ -1,4 +1,5 @@
 """ collection of various helper functions for running ACE"""
+import logging
 import os
 from multiprocessing import dummy as multiprocessing
 
@@ -12,6 +13,8 @@ from sklearn import linear_model
 from sklearn.model_selection import cross_val_score
 
 from tcav import model
+
+logger = logging.getLogger(__name__)
 
 
 def make_model(config_model, sess, randomize=False, model_path=None,
@@ -180,6 +183,7 @@ def plot_concepts(cd, bn, num=10, address=None, mode='diverse', concepts=None):
   elif not isinstance(concepts, list) and not isinstance(concepts, tuple):
     concepts = [concepts]
   num_concepts = len(concepts)
+  logger.debug('num_concepts: {}'.format(num_concepts))
   plt.rcParams['figure.figsize'] = num * 2.1, 4.3 * num_concepts
   fig = plt.figure(figsize=(num * 2, 4 * num_concepts))
   outer = gridspec.GridSpec(num_concepts, 1, wspace=0., hspace=0.3)

@@ -5,6 +5,7 @@ ConceptDiscovery class that is able to discover the concepts belonging to one
 of the possible classification labels of the classification task of a network
 and calculate each concept's TCAV score..
 """
+import logging
 import os
 from math import ceil
 from multiprocessing import dummy as multiprocessing
@@ -18,6 +19,8 @@ import tensorflow as tf
 from PIL import Image
 
 from tcav import cav, tcav_helpers
+
+logger = logging.getLogger(__name__)
 
 
 class ConceptDiscovery(object):
@@ -241,6 +244,7 @@ class ConceptDiscovery(object):
       elif method == 'felzenszwalb':
         segments = segmentation.felzenszwalb(
             img, scale=scales[i], sigma=sigmas[i], min_size=min_sizes[i])
+      logger.debug('n_segment: {}'.format(segments.max()+1))
       for s in range(segments.max()):
         mask = (segments == s).astype(np.float32)
         if np.mean(mask) > 0.001:

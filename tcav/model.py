@@ -15,12 +15,15 @@ limitations under the License.
 """
 
 """Model wrapper for TCAV."""
+import logging
 import re
 from abc import ABCMeta
 from abc import abstractmethod
 
 import numpy as np
 import tensorflow as tf
+
+logger = logging.getLogger(__name__)
 
 
 class ModelWrapper(object):
@@ -134,6 +137,7 @@ class ModelWrapper(object):
     Returns:
       Activations in the given layer - shape is [?, width, height, num_filters]
     """
+    logger.debug('imgs.shape: {}'.format(imgs.shape))
     return self.sess.run(self.bottlenecks_tensors[bottleneck_name],
                          {self.ends['input']: imgs})
 
@@ -340,6 +344,7 @@ class FasterRCNNWrapper(PublicModelWrapper):
 
   def run_imgs(self, imgs, bottleneck_name):
     def do_run_imgs(imgs):
+      logger.debug('imgs.shape: {}'.format(imgs.shape))
       return self.sess.run(self.bottlenecks_tensors[bottleneck_name], {
           self.ends['input']: imgs * 255,
           self.ends['boxes']: np.tile(np.array([0, 0, 1, 1], dtype=np.float32), (len(imgs), 1)),
