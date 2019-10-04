@@ -338,11 +338,18 @@ class FasterRCNNWrapper(PublicModelWrapper):
     })
 
   def run_imgs(self, imgs, bottleneck_name):
-    return self.sess.run(self.bottlenecks_tensors[bottleneck_name], {
-        self.ends['input']: imgs * 255,
-        self.ends['boxes']: np.tile(np.array([0, 0, 1, 1], dtype=np.float32), (len(imgs), 1)),
-        self.ends['box_ind']: np.arange(len(imgs), dtype=np.int32),
-    })
+    def do_run_imgs(imgs):
+      return self.sess.run(self.bottlenecks_tensors[bottleneck_name], {
+          self.ends['input']: imgs * 255,
+          self.ends['boxes']: np.tile(np.array([0, 0, 1, 1], dtype=np.float32), (len(imgs), 1)),
+          self.ends['box_ind']: np.arange(len(imgs), dtype=np.int32),
+      })
+
+    if len(imgs.shape) == 4:
+      return do_run_imgs(imgs)
+    if len(imgs.shape) == 1:
+      return [do_run_imgs(img[None]) for img in imgs]
+    raise ValueError('len(imgs.shape) must be 4 or 1, got {}'.format(len(imgs.shape)))
 
   @staticmethod
   def get_bottleneck_tensors(scope):
