@@ -40,6 +40,8 @@ class ConceptDiscovery(object):
                min_imgs=20,
                num_discovery_imgs=40,
                num_workers=20,
+               resize_images=True,
+               resize_patches=True,
                average_image_value=117):
     """Runs concept discovery for a given class in a trained model.
 
@@ -75,6 +77,8 @@ class ConceptDiscovery(object):
       num_workers: if greater than zero, runs methods in parallel with
         num_workers parallel threads. If 0, no method is run in parallel
         threads.
+      resize_images: Whether to resize images or not.
+      resize_patches: Whether to resize patches or not.
       average_image_value: The average value used for mean subtraction in the
                            nework's preprocessing stage.
     """
@@ -97,6 +101,8 @@ class ConceptDiscovery(object):
       num_discovery_imgs = max_imgs
     self.num_discovery_imgs = num_discovery_imgs
     self.num_workers = num_workers
+    self.resize_images = resize_images
+    self.resize_patches = resize_patches
     self.average_image_value = average_image_value
 
   def load_concept_imgs(self, concept, max_imgs=1000):
@@ -120,7 +126,7 @@ class ConceptDiscovery(object):
         return_filenames=False,
         do_shuffle=False,
         run_parallel=(self.num_workers > 0),
-        shape=(self.image_shape),
+        shape=self.image_shape if self.resize_images else None,
         num_workers=self.num_workers)
 
   def create_patches(self, method='slic', discovery_images=None,
@@ -259,19 +265,21 @@ class ConceptDiscovery(object):
       mask: The binary mask of the patch area
 
     Returns:
-      image_resized: The resized patch such that its boundaries touches the
-        image boundaries
-      patch: The original patch. Rest of the image is padded with average value
+      patch_cropped: The cropped patch such that its boundaries touches the
+        image boundaries.  It is also resized if self.resize_patches is True.
+      patch: The original patch.  Rest of the image is padded with average value.
     """
     mask_expanded = np.expand_dims(mask, -1)
     patch = (mask_expanded * image + (
         1 - mask_expanded) * float(self.average_image_value) / 255)
     ones = np.where(mask == 1)
     h1, h2, w1, w2 = ones[0].min(), ones[0].max() + 1, ones[1].min(), ones[1].max() + 1
-    image = Image.fromarray((patch[h1:h2, w1:w2] * 255).astype(np.uint8))
-    image_resized = np.array(image.resize(self.image_shape,
-                                          Image.BICUBIC)).astype(np.float32) / 255
-    return image_resized, patch
+    patch_cropped = patch[h1:h2, w1:w2]
+    if self.resize_patches:
+      patch_cropped = Image.fromarray((patch_cropped * 255).astype(np.uint8))
+      patch_cropped = patch_cropped.resize(self.image_shape, Image.BICUBIC)
+      patch_cropped = np.array(patch_cropped).astype(np.float32) / 255
+    return patch_cropped, patch
 
   def _patch_activations(self, imgs, bottleneck, bs=100, channel_mean=None):
     """Returns activations of a list of imgs.

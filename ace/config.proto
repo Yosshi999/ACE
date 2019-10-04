@@ -15,13 +15,15 @@ message Config {
   string test_dir = 3;
 
   int32 num_workers = 4;
+  bool resize_images = 5;
+  bool resize_patches = 6;
 
   // The name of the target class to be interpreted.
-  string target_class = 5;
+  string target_class = 7;
 
   // Names of the target layers of the network.
-  repeated string bottlenecks = 6;
+  repeated string bottlenecks = 8;
 
   // Maximum number of images in a discovered concept.
-  int32 max_imgs = 7;
+  int32 max_imgs = 9;
 }

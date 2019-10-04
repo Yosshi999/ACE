@@ -76,7 +76,7 @@ def load_image_from_file(filename, shape):
 
   Args:
     filename: location of the image file
-    shape: the shape of the image file to be scaled
+    shape: The shape of the image file to be scaled.  If None, do not resize.
 
   Returns:
     the image if succeeds, None if fails.
@@ -88,8 +88,10 @@ def load_image_from_file(filename, shape):
     tf.logging.error('Cannot find file: {}'.format(filename))
     return None
   try:
-    img = np.array(PIL.Image.open(filename).resize(
-        shape, PIL.Image.BILINEAR))
+    img = PIL.Image.open(filename)
+    if shape is not None:
+      img = img.resize(shape, PIL.Image.BILINEAR)
+    img = np.array(img)
     # Normalize pixel values to between 0 and 1.
     img = np.float32(img) / 255.0
     if not (len(img.shape) == 3 and img.shape[2] == 3):
@@ -115,7 +117,7 @@ def load_images_from_files(filenames, max_imgs=500, return_filenames=False,
     return_filenames: return the succeeded filenames or not
     do_shuffle: before getting max_imgs files, shuffle the names or not
     run_parallel: get images in parallel or not
-    shape: desired shape of the image
+    shape: Desired shape of the image.  If None, do not resize.
     num_workers: number of workers in parallelization.
 
   Returns:

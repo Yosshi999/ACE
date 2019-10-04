@@ -5,6 +5,8 @@ model {
 }
 source_dir: 'PATH_TO_BE_CONFIGURED'
 test_dir: 'PATH_TO_BE_CONFIGURED'
+resize_images: true
+resize_patches: true
 target_class: 'zebra'
 bottlenecks: 'Mixed_7a'
 max_imgs: 40

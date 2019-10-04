@@ -57,7 +57,9 @@ def main(args):
       max_imgs=max_imgs,
       min_imgs=min_imgs,
       num_discovery_imgs=max_imgs,
-      num_workers=args.config.num_workers)
+      num_workers=args.config.num_workers,
+      resize_images=args.config.resize_images,
+      resize_patches=args.config.resize_patches)
   # Creating the dataset of image patches
   cd.create_patches(param_dict={'n_segments': [15, 50, 80]})
   # Saving the concept discovery target class images
