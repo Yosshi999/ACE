@@ -37,6 +37,7 @@ def main(args):
   test_dir = args.config.test_dir
   working_dir = args.working_dir
   target_class = args.config.target_class
+  target_class_mask = args.config.target_class_mask or None
   bottlenecks = list(args.config.bottlenecks)
   num_test = args.num_test
   num_random_exp = args.num_random_exp
@@ -64,6 +65,7 @@ def main(args):
   cd = ConceptDiscovery(
       mymodel,
       target_class,
+      target_class_mask,
       random_concept,
       bottlenecks,
       sess,

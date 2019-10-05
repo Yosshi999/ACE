@@ -5,6 +5,7 @@ ConceptDiscovery class that is able to discover the concepts belonging to one
 of the possible classification labels of the classification task of a network
 and calculate each concept's TCAV score..
 """
+import itertools
 import logging
 import os
 from math import ceil
@@ -18,6 +19,7 @@ import sklearn.metrics.pairwise as metrics
 import tensorflow as tf
 from PIL import Image
 
+import ace.slic
 from tcav import cav, tcav_helpers
 
 logger = logging.getLogger(__name__)
@@ -34,6 +36,7 @@ class ConceptDiscovery(object):
   def __init__(self,
                model,
                target_class,
+               target_class_mask,
                random_concept,
                bottlenecks,
                sess,
@@ -59,6 +62,8 @@ class ConceptDiscovery(object):
       model: A trained classification model on which we run the concept
              discovery algorithm
       target_class: Name of the one of the classes of the network
+      target_class_mask: Name of the directory containing masks for images in the target_class directory.
+        If None, whole images are used.
       random_concept: A concept made of random images (used for statistical
                       test) e.g. "random500_199"
       bottlenecks: a list of bottleneck layers of the model for which the cocept
@@ -91,6 +96,7 @@ class ConceptDiscovery(object):
     self.model = model
     self.sess = sess
     self.target_class = target_class
+    self.target_class_mask = target_class_mask
     self.num_random_exp = num_random_exp
     if isinstance(bottlenecks, str):
       bottlenecks = [bottlenecks]
@@ -111,22 +117,26 @@ class ConceptDiscovery(object):
     self.resize_patches = resize_patches
     self.average_image_value = average_image_value
 
-  def load_concept_imgs(self, concept, max_imgs=1000):
-    """Loads all colored images of a concept.
+  def load_concept_imgs(self, concept, max_imgs=1000, concept_mask=None):
+    """Loads all colored images (and masks) of a concept.
 
     Args:
       concept: The name of the concept to be loaded
       max_imgs: maximum number of images to be loaded
+      concept_mask: The name of the concept masks to be loaded.
+        If None, masks are not loaded.
 
     Returns:
-      Images of the desired concept or class.
+      If concept_mask is None, images of the desired concept are returned.
+      If concept_mask is not None, a tuple of (images, masks) is returned.
     """
     concept_dir = os.path.join(self.source_dir, concept)
+    img_filenames = tf.gfile.ListDirectory(concept_dir)
     img_paths = [
         os.path.join(concept_dir, d)
-        for d in tf.gfile.ListDirectory(concept_dir)
+        for d in img_filenames
     ]
-    return tcav_helpers.load_images_from_files(
+    imgs = tcav_helpers.load_images_from_files(
         img_paths,
         max_imgs=max_imgs,
         return_filenames=False,
@@ -134,6 +144,12 @@ class ConceptDiscovery(object):
         run_parallel=(self.num_workers > 0),
         shape=self.image_shape if self.resize_images else None,
         num_workers=self.num_workers)
+    if concept_mask is None:
+      return imgs
+    concept_mask_dir = os.path.join(self.source_dir, concept_mask)
+    masks = [np.load(os.path.join(concept_mask_dir, os.path.splitext(filename)[0]+'.npy')) for filename in img_filenames[:max_imgs]]
+    assert len(imgs) == len(masks)
+    return imgs, masks
 
   def create_patches(self, method='slic', discovery_images=None,
                      param_dict=None):
@@ -156,17 +172,20 @@ class ConceptDiscovery(object):
     if param_dict is None:
       param_dict = {}
     dataset, image_numbers, patches = [], [], []
+    masks = itertools.repeat(None)
     if discovery_images is None:
       raw_imgs = self.load_concept_imgs(
-          self.target_class, self.num_discovery_imgs)
+          self.target_class, self.num_discovery_imgs, self.target_class_mask)
+      if self.target_class_mask is not None:
+        raw_imgs, masks = raw_imgs
       self.discovery_images = raw_imgs
     else:
       self.discovery_images = discovery_images
     if self.num_workers:
       pool = multiprocessing.Pool(self.num_workers)
       outputs = pool.map(
-          lambda img: self._return_superpixels(img, method, param_dict),
-          self.discovery_images)
+          lambda img_and_mask: self._return_superpixels(img_and_mask[0], img_and_mask[1], method, param_dict),
+          zip(self.discovery_images, masks))
       for fn, sp_outputs in enumerate(outputs):
         image_superpixels, image_patches = sp_outputs
         for superpixel, patch in zip(image_superpixels, image_patches):
@@ -174,9 +193,9 @@ class ConceptDiscovery(object):
           patches.append(patch)
           image_numbers.append(fn)
     else:
-      for fn, img in enumerate(self.discovery_images):
+      for fn, (img, mask) in enumerate(zip(self.discovery_images, masks)):
         image_superpixels, image_patches = self._return_superpixels(
-            img, method, param_dict)
+            img, mask, method, param_dict)
         for superpixel, patch in zip(image_superpixels, image_patches):
           dataset.append(superpixel)
           patches.append(patch)
@@ -184,7 +203,7 @@ class ConceptDiscovery(object):
     self.dataset, self.image_numbers, self.patches =\
     np.array(dataset), np.array(image_numbers), np.array(patches)
 
-  def _return_superpixels(self, img, method='slic',
+  def _return_superpixels(self, img, img_mask, method='slic',
                           param_dict=None):
     """Returns all patches for one image.
 
@@ -195,6 +214,7 @@ class ConceptDiscovery(object):
 
     Args:
       img: The input image
+      img_mask: The mask for the input image.  Can be None.
       method: superpixel method, one of slic, watershed, quichsift, or
         felzenszwalb
       param_dict: Contains parameters of the superpixel method used in the form
@@ -206,6 +226,8 @@ class ConceptDiscovery(object):
     """
     if param_dict is None:
       param_dict = {}
+    if img_mask is not None and method != 'slic':
+      raise ValueError('Invalid superpixel method!')
     if method == 'slic':
       n_segmentss = param_dict.get('n_segments', [15, 50, 80])
       n_params = len(n_segmentss)
@@ -231,9 +253,14 @@ class ConceptDiscovery(object):
     for i in range(n_params):
       param_masks = []
       if method == 'slic':
-        segments = segmentation.slic(
-            img, n_segments=n_segmentss[i], compactness=compactnesses[i],
-            sigma=sigmas[i])
+        if img_mask is None:
+          segments = segmentation.slic(
+              img, n_segments=n_segmentss[i], compactness=compactnesses[i],
+              sigma=sigmas[i])
+        else:
+          segments = ace.slic.slic(
+              img, img_mask, n_segments=n_segmentss[i], compactness=compactnesses[i],
+              sigma=sigmas[i])
       elif method == 'watershed':
         segments = segmentation.watershed(
             img, markers=markerss[i], compactness=compactnesses[i])
