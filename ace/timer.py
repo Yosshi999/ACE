@@ -25,6 +25,7 @@ class Timer:
     def __init__(self, logfile_path, section_name):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
+        self.logfile_path = logfile_path
         handler = logging.FileHandler(logfile_path)
         self.logger.addHandler(handler)
         self.log_to_file = _HandlerEnabler(handler)
@@ -39,6 +40,9 @@ class Timer:
 
     def close(self):
         self._section_end('')
+
+        with open(self.logfile_path) as f:
+            self.logger.info('Timer summary:\n' + f.read())
 
     def _section_start(self):
         self.logger.info(self.section_name)
