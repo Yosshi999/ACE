@@ -10,6 +10,7 @@ import tensorflow as tf
 import ace.config
 from ace import ace_helpers
 from ace.ace import ConceptDiscovery
+from ace.timer import Timer
 from tcav import utils
 
 
@@ -58,6 +59,7 @@ def main(args):
   tf.gfile.MakeDirs(activations_dir)
   tf.gfile.MakeDirs(results_summaries_dir)
   setup_logger(working_dir)
+  timer = Timer(os.path.join(working_dir, 'timer.txt'), 'create_patches')
   random_concept = 'random500_{}'.format(num_random_exp)  # Random concept for statistical testing
   sess = utils.create_session()
   mymodel = ace_helpers.make_model(args.config.model, sess)
@@ -83,18 +85,24 @@ def main(args):
   # Creating the dataset of image patches
   cd.create_patches(param_dict={'n_segments': list(args.config.slic.n_segments)})
   # Discovering Concepts
+  timer('discover_concepts')
   cd.discover_concepts(method='KM', param_dicts={'n_clusters': 25})
   del cd.dataset  # Free memory
   del cd.image_numbers
   del cd.patches
   # Calculating CAVs and TCAV scores
+  timer('cav')
   cav_accuraciess = cd.cavs(min_acc=0.0)
+  timer('tcav')
   scores = cd.tcavs(test=False)
+  timer('save_ace_report')
   ace_helpers.save_ace_report(cd, cav_accuraciess, scores,
                                  results_summaries_dir + 'ace_results.txt')
   # Plot examples of discovered concepts
+  timer('plot_concepts')
   for bn in cd.bottlenecks:
     ace_helpers.plot_concepts(cd, bn, 10, address=results_dir)
+  timer.close()
 
 def parse_arguments(argv):
   """Parses the arguments passed to the run.py script."""
