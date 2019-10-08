@@ -3,6 +3,7 @@ import argparse
 import logging
 import os
 import shutil
+import subprocess
 import sys
 
 import logzero
@@ -61,6 +62,8 @@ def main(args):
   tf.gfile.MakeDirs(results_summaries_dir)
   setup_logger(working_dir)
   shutil.copyfile(args.config, os.path.join(working_dir, 'config.pbtxt'))
+  with open(os.path.join(working_dir, 'commit'), 'w') as f:
+    subprocess.run(['git', 'log', '-1', '--format=%H'], stdout=f, cwd=os.path.dirname(__file__) or '.')
   timer = Timer(os.path.join(working_dir, 'timer.txt'), 'create_patches')
   random_concept = 'random500_{}'.format(num_random_exp)  # Random concept for statistical testing
   sess = utils.create_session()
