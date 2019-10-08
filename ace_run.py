@@ -2,6 +2,7 @@
 import argparse
 import logging
 import os
+import shutil
 import sys
 
 import logzero
@@ -59,6 +60,7 @@ def main(args):
   tf.gfile.MakeDirs(activations_dir)
   tf.gfile.MakeDirs(results_summaries_dir)
   setup_logger(working_dir)
+  shutil.copyfile(args.config, os.path.join(working_dir, 'config.pbtxt'))
   timer = Timer(os.path.join(working_dir, 'timer.txt'), 'create_patches')
   random_concept = 'random500_{}'.format(num_random_exp)  # Random concept for statistical testing
   sess = utils.create_session()
