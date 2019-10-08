@@ -33,16 +33,16 @@ def setup_logger(working_dir):
 
 
 def main(args):
-
-  source_dir = args.config.source_dir
-  test_dir = args.config.test_dir
+  config = ace.config.load(args.config)
+  source_dir = config.source_dir
+  test_dir = config.test_dir
   working_dir = args.working_dir
-  target_class = args.config.target_class
-  target_class_mask = args.config.target_class_mask or None
-  bottlenecks = list(args.config.bottlenecks)
+  target_class = config.target_class
+  target_class_mask = config.target_class_mask or None
+  bottlenecks = list(config.bottlenecks)
   num_test = args.num_test
   num_random_exp = args.num_random_exp
-  max_imgs = args.config.max_imgs
+  max_imgs = config.max_imgs
   min_imgs = args.min_imgs
   ###### related DIRs on CNS to store results #######
   discovered_concepts_dir = os.path.join(working_dir, 'concepts/')
@@ -62,7 +62,7 @@ def main(args):
   timer = Timer(os.path.join(working_dir, 'timer.txt'), 'create_patches')
   random_concept = 'random500_{}'.format(num_random_exp)  # Random concept for statistical testing
   sess = utils.create_session()
-  mymodel = ace_helpers.make_model(args.config.model, sess)
+  mymodel = ace_helpers.make_model(config.model, sess)
   # Creating the ConceptDiscovery class instance
   cd = ConceptDiscovery(
       mymodel,
@@ -79,11 +79,11 @@ def main(args):
       max_imgs=max_imgs,
       min_imgs=min_imgs,
       num_discovery_imgs=max_imgs,
-      num_workers=args.config.num_workers,
-      resize_images=args.config.resize_images,
-      resize_patches=args.config.resize_patches)
+      num_workers=config.num_workers,
+      resize_images=config.resize_images,
+      resize_patches=config.resize_patches)
   # Creating the dataset of image patches
-  cd.create_patches(param_dict={'n_segments': list(args.config.slic.n_segments)})
+  cd.create_patches(param_dict={'n_segments': list(config.slic.n_segments)})
   # Discovering Concepts
   timer('discover_concepts')
   cd.discover_concepts(method='KM', param_dicts={'n_clusters': 25})
@@ -107,7 +107,7 @@ def main(args):
 def parse_arguments(argv):
   """Parses the arguments passed to the run.py script."""
   parser = argparse.ArgumentParser()
-  parser.add_argument('--config', type=ace.config.load, required=True)
+  parser.add_argument('--config', required=True)
   parser.add_argument('--working_dir', type=str,
       help='Directory to save the results.', default='./ACE')
   parser.add_argument('--num_test', type=int,
