@@ -36,6 +36,7 @@ class ConceptDiscovery(object):
   def __init__(self,
                model,
                target_class,
+               target_class_dirname,
                target_class_mask,
                random_concept,
                bottlenecks,
@@ -62,7 +63,9 @@ class ConceptDiscovery(object):
       model: A trained classification model on which we run the concept
              discovery algorithm
       target_class: Name of the one of the classes of the network
-      target_class_mask: Name of the directory containing masks for images in the target_class directory.
+      target_class_dirname: Name of the directory containing images of the target class.
+        If None, it is set to target_class.
+      target_class_mask: Name of the directory containing masks for images in the target_class_dirname directory.
         If None, whole images are used.
       random_concept: A concept made of random images (used for statistical
                       test) e.g. "random500_199"
@@ -96,6 +99,9 @@ class ConceptDiscovery(object):
     self.model = model
     self.sess = sess
     self.target_class = target_class
+    if target_class_dirname is None:
+        target_class_dirname = target_class
+    self.target_class_dirname = target_class_dirname
     self.target_class_mask = target_class_mask
     self.num_random_exp = num_random_exp
     if isinstance(bottlenecks, str):
@@ -175,7 +181,7 @@ class ConceptDiscovery(object):
     masks = itertools.repeat(None)
     if discovery_images is None:
       raw_imgs = self.load_concept_imgs(
-          self.target_class, self.num_discovery_imgs, self.target_class_mask)
+          self.target_class_dirname, self.num_discovery_imgs, self.target_class_mask)
       if self.target_class_mask is not None:
         raw_imgs, masks = raw_imgs
       self.discovery_images = raw_imgs
@@ -703,7 +709,7 @@ class ConceptDiscovery(object):
     tcav_scores = {bn: {} for bn in self.bottlenecks}
     randoms = ['random500_{}'.format(i) for i in np.arange(self.num_random_exp)]
     if tcav_score_images is None:  # Load target class images if not given
-      raw_imgs = self.load_concept_imgs(self.target_class, 2 * self.max_imgs)
+      raw_imgs = self.load_concept_imgs(self.target_class_dirname, 2 * self.max_imgs)
       tcav_score_images = raw_imgs[-self.max_imgs:]
     gradients = self._return_gradients(tcav_score_images)
     for bn in self.bottlenecks:

@@ -21,18 +21,19 @@ message Config {
   // The name of the target class to be interpreted.
   string target_class = 7;
 
-  string target_class_mask = 8;
+  string target_class_dirname = 8;
+  string target_class_mask = 9;
 
   // Names of the target layers of the network.
-  repeated string bottlenecks = 9;
+  repeated string bottlenecks = 10;
 
   // Maximum number of images in a discovered concept.
-  int32 max_imgs = 10;
+  int32 max_imgs = 11;
 
   message Slic {
     repeated int32 n_segments = 1;
   }
   oneof superpixel_method {
-    Slic slic = 11;
+    Slic slic = 12;
   }
 }
