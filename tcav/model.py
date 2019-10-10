@@ -354,7 +354,7 @@ class FasterRCNNWrapper(PublicModelWrapper):
     if len(imgs.shape) == 4:
       return do_run_imgs(imgs)
     if len(imgs.shape) == 1:
-      return [do_run_imgs(img[None]) for img in imgs]
+      return np.concatenate([do_run_imgs(img[None]) for img in imgs])
     raise ValueError('len(imgs.shape) must be 4 or 1, got {}'.format(len(imgs.shape)))
 
   @staticmethod
