@@ -90,7 +90,7 @@ def main(args):
       resize_images=config.resize_images,
       resize_patches=config.resize_patches)
   # Creating the dataset of image patches
-  cd.create_patches(param_dict={'n_segments': list(config.slic.n_segments)})
+  cd.create_patches(param_dict={'n_segments': list(config.slic.n_segments), 'n_segments_reference_area': config.slic.n_segments_reference_area})
   # Discovering Concepts
   timer('discover_concepts')
   cd.discover_concepts(method='KM', param_dicts={'n_clusters': 25})

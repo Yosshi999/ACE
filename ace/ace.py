@@ -236,6 +236,12 @@ class ConceptDiscovery(object):
       raise ValueError('Invalid superpixel method!')
     if method == 'slic':
       n_segmentss = param_dict.get('n_segments', [15, 50, 80])
+      reference_area = param_dict.get('n_segments_reference_area')
+      if reference_area:
+        area = img.shape[0] * img.shape[1]
+        scale = area / reference_area
+        for i in range(len(n_segmentss)):
+          n_segmentss[i] = round(n_segmentss[i] * scale) or 1
       n_params = len(n_segmentss)
       compactnesses = param_dict.get('compactness', [20] * n_params)
       sigmas = param_dict.get('sigma', [1.] * n_params)

@@ -32,6 +32,7 @@ message Config {
 
   message Slic {
     repeated int32 n_segments = 1;
+    int32 n_segments_reference_area = 2;
   }
   oneof superpixel_method {
     Slic slic = 12;
