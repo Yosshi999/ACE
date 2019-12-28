@@ -1,5 +1,6 @@
 import logging
 
+import cv2
 import numpy as np
 import torch
 
@@ -8,6 +9,7 @@ from tcav.model import PublicModelWrapper
 from datasets.dataset_factory import get_dataset
 from models.model import create_model, load_model
 from opts import opts
+from utils.image import get_affine_transform
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +43,19 @@ class CenterNetWrapper(PublicModelWrapper):
     if bottleneck_name != 'y_last':
       raise NotImplementedError
 
-    def do_run_imgs(imgs):
-      logger.debug('imgs.shape: {}'.format(imgs.shape))
-      imgs = (imgs - self.opt.mean) / self.opt.std
-      imgs = imgs.transpose(0, 3, 1, 2)
+    def run_img(img):
+      logger.debug('img.shape: {}'.format(img.shape))
+      height, width = img.shape[0], img.shape[1]
+      c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
+      input_h = (height | self.opt.pad) + 1
+      input_w = (width | self.opt.pad) + 1
+      s = np.array([input_w, input_h], dtype=np.float32)
+      trans_input = get_affine_transform(c, s, 0, [input_w, input_h])
+      img = cv2.warpAffine(img, trans_input,
+                           (input_w, input_h),
+                           flags=cv2.INTER_LINEAR)
+      img = (img - self.opt.mean) / self.opt.std
+      imgs = img.transpose(2, 0, 1)[None]
       with torch.no_grad():
         x = torch.from_numpy(imgs)
         x = x.to(self.device)
@@ -57,8 +68,4 @@ class CenterNetWrapper(PublicModelWrapper):
         model.ida_up(y, 0, len(y))
         return y[-1].cpu().numpy()
 
-    if len(imgs.shape) == 4:
-      return do_run_imgs(imgs)
-    if len(imgs.shape) == 1:
-      return np.concatenate([do_run_imgs(img[None]) for img in imgs])
-    raise ValueError('len(imgs.shape) must be 4 or 1, got {}'.format(len(imgs.shape)))
+    return np.concatenate([run_img(img) for img in imgs])
