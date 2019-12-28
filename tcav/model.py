@@ -383,3 +383,6 @@ class FasterRCNNWrapper(PublicModelWrapper):
       myendpoints = dict(zip(endpoints.keys(), myendpoints))
       myendpoints['prediction'] = tf.nn.softmax(myendpoints['logit'])
     return myendpoints
+
+
+from tcav.model_torch import CenterNetWrapper

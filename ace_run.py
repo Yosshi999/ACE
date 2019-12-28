@@ -13,7 +13,6 @@ import ace.config
 from ace import ace_helpers
 from ace.ace import ConceptDiscovery
 from ace.timer import Timer
-from tcav import utils
 
 
 def setup_logger(working_dir):
@@ -67,8 +66,7 @@ def main(args):
     subprocess.run(['git', 'log', '-1', '--format=%H'], stdout=f, cwd=os.path.dirname(__file__) or '.')
   timer = Timer(os.path.join(working_dir, 'timer.txt'), 'create_patches')
   random_concept = 'random500_{}'.format(num_random_exp)  # Random concept for statistical testing
-  sess = utils.create_session()
-  mymodel = ace_helpers.make_model(config.model, sess)
+  mymodel = ace_helpers.make_model(config.model)
   # Creating the ConceptDiscovery class instance
   cd = ConceptDiscovery(
       mymodel,
@@ -77,7 +75,7 @@ def main(args):
       target_class_mask,
       random_concept,
       bottlenecks,
-      sess,
+      None,
       source_dir,
       activations_dir,
       cavs_dir,

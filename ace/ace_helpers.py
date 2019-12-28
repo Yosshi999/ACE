@@ -12,12 +12,12 @@ from skimage.segmentation import mark_boundaries
 from sklearn import linear_model
 from sklearn.model_selection import cross_val_score
 
-from tcav import model
+from tcav import model, utils
 
 logger = logging.getLogger(__name__)
 
 
-def make_model(config_model, sess, randomize=False, model_path=None,
+def make_model(config_model, sess=None, randomize=False, model_path=None,
                labels_path=None):
   """Make an instance of a model.
 
@@ -39,6 +39,8 @@ def make_model(config_model, sess, randomize=False, model_path=None,
     model_wrapper_class = getattr(model, config_model.model_wrapper_class)
   except AttributeError:
     raise ValueError('Invalid model name')
+  if sess is None and not getattr(model_wrapper_class, 'do_not_use_tf_session', False):
+    sess = utils.create_session()
   if model_path is None:
     model_path = config_model.model_path
   if labels_path is None:
