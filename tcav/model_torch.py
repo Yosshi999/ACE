@@ -45,11 +45,9 @@ class CenterNetWrapper(PublicModelWrapper):
 
     def run_img(img):
       logger.debug('img.shape: {}'.format(img.shape))
-      height, width = img.shape[0], img.shape[1]
       c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
-      input_h = (height | self.opt.pad) + 1
-      input_w = (width | self.opt.pad) + 1
-      s = np.array([input_w, input_h], dtype=np.float32)
+      s = max(img.shape[0], img.shape[1]) * 1.0
+      input_h, input_w = self.opt.input_h, self.opt.input_w
       trans_input = get_affine_transform(c, s, 0, [input_w, input_h])
       img = cv2.warpAffine(img, trans_input,
                            (input_w, input_h),
