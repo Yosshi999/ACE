@@ -34,15 +34,9 @@ class CenterNetWrapper(PublicModelWrapper):
     self.model.eval()  # TODO: model_with_loss
 
   def get_gradient(self, acts, y, bottleneck_name):
-    if bottleneck_name != 'y_last':
-      raise NotImplementedError
-
     return np.zeros_like(acts)  # TODO
 
   def run_imgs(self, imgs, bottleneck_name):
-    if bottleneck_name != 'y_last':
-      raise NotImplementedError
-
     def run_img(img):
       logger.debug('img.shape: {}'.format(img.shape))
       c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
@@ -59,11 +53,17 @@ class CenterNetWrapper(PublicModelWrapper):
         x = x.to(self.device)
         model = self.model
         x = model.base(x)
+        if bottleneck_name == 'base_last':
+          return x[-1].cpu().numpy()
         x = model.dla_up(x)
+        if bottleneck_name == 'dla_up_0':
+          return x[0].cpu().numpy()
         y = []
         for i in range(model.last_level - model.first_level):
           y.append(x[i].clone())
         model.ida_up(y, 0, len(y))
-        return y[-1].cpu().numpy()
+        if bottleneck_name == 'y_last':
+          return y[-1].cpu().numpy()
+        raise NotImplementedError
 
     return np.concatenate([run_img(img) for img in imgs])
