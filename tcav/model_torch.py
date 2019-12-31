@@ -9,7 +9,6 @@ from tcav.model import PublicModelWrapper
 from datasets.dataset_factory import get_dataset
 from models.model import create_model, load_model
 from opts import opts
-from utils.image import get_affine_transform
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +38,10 @@ class CenterNetWrapper(PublicModelWrapper):
   def run_imgs(self, imgs, bottleneck_name):
     def run_img(img):
       logger.debug('img.shape: {}'.format(img.shape))
-      c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
-      s = max(img.shape[0], img.shape[1]) * 1.0
       input_h, input_w = self.opt.input_h, self.opt.input_w
-      trans_input = get_affine_transform(c, s, 0, [input_w, input_h])
+      trans_input = cv2.getAffineTransform(
+          np.array([[0, 0], [img.shape[1], 0], [0, img.shape[0]]], dtype=np.float32),
+          np.array([[0, 0], [input_w, 0], [0, input_h]], dtype=np.float32))
       img = cv2.warpAffine(img, trans_input,
                            (input_w, input_h),
                            flags=cv2.INTER_LINEAR)
