@@ -385,4 +385,6 @@ class FasterRCNNWrapper(PublicModelWrapper):
     return myendpoints
 
 
-from tcav.model_torch import CenterNetWrapper
+def loadCenterNetWrapper():
+    from tcav.model_centernet import CenterNetWrapper
+    return CenterNetWrapper

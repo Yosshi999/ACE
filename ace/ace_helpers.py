@@ -38,7 +38,10 @@ def make_model(config_model, sess=None, randomize=False, model_path=None,
   try:
     model_wrapper_class = getattr(model, config_model.model_wrapper_class)
   except AttributeError:
-    raise ValueError('Invalid model name')
+    try:
+      model_wrapper_class = getattr(model, 'load' + config_model.model_wrapper_class)()
+    except AttributeError:
+      raise ValueError('Invalid model name')
   if sess is None and not getattr(model_wrapper_class, 'do_not_use_tf_session', False):
     sess = utils.create_session()
   if model_path is None:
