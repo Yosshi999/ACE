@@ -53,16 +53,16 @@ class CenterNetWrapper(PublicModelWrapper):
         model = self.model
         x = model.base(x)
         if bottleneck_name == 'base_last':
-          return x[-1].cpu().numpy()
+          return x[-1].cpu().numpy().transpose(0, 2, 3, 1)
         x = model.dla_up(x)
         if bottleneck_name == 'dla_up_0':
-          return x[0].cpu().numpy()
+          return x[0].cpu().numpy().transpose(0, 2, 3, 1)
         y = []
         for i in range(model.last_level - model.first_level):
           y.append(x[i].clone())
         model.ida_up(y, 0, len(y))
         if bottleneck_name == 'y_last':
-          return y[-1].cpu().numpy()
+          return y[-1].cpu().numpy().transpose(0, 2, 3, 1)
         raise NotImplementedError
 
     return np.concatenate([run_img(img) for img in imgs])
