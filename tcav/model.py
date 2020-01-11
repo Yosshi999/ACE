@@ -237,7 +237,7 @@ class PublicModelWrapper(ModelWrapper):
 
 class GoolgeNetWrapper_public(PublicModelWrapper):
 
-  def __init__(self, sess, model_saved_path, labels_path):
+  def __init__(self, sess, model_saved_path, labels_path, **_):
     image_shape_v1 = [224, 224, 3]
     self.image_value_range = (-117, 255-117)
     endpoints_v1 = dict(
@@ -263,7 +263,7 @@ class GoolgeNetWrapper_public(PublicModelWrapper):
     return pred_t[::16]
 
 class InceptionV3Wrapper_public(PublicModelWrapper):
-  def __init__(self, sess, model_saved_path, labels_path):
+  def __init__(self, sess, model_saved_path, labels_path, **_):
     self.image_value_range = (-117, 255-117)
     image_shape_v3 = [299, 299, 3]
     endpoints_v3 = dict(
@@ -286,7 +286,7 @@ class InceptionV3Wrapper_public(PublicModelWrapper):
 
 
 class InceptionV3Wrapper(PublicModelWrapper):
-  def __init__(self, sess, model_saved_path, labels_path):
+  def __init__(self, sess, model_saved_path, labels_path, **_):
     self.image_value_range = (-117, 255-117)
     image_shape_v3 = [299, 299, 3]
     endpoints_v3 = dict(
@@ -315,7 +315,7 @@ class InceptionV3Wrapper(PublicModelWrapper):
 
 
 class FasterRCNNWrapper(PublicModelWrapper):
-  def __init__(self, sess, model_saved_path, labels_path):
+  def __init__(self, sess, model_saved_path, labels_path, **_):
     self.image_value_range = None
     image_shape = [600, 600, 3]
     endpoints = dict(

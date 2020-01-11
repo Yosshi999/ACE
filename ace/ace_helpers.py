@@ -49,7 +49,7 @@ def make_model(config_model, sess=None, randomize=False, model_path=None,
   if labels_path is None:
     labels_path = config_model.labels_path
   mymodel = model_wrapper_class(
-      sess, model_saved_path=model_path, labels_path=labels_path)
+      sess, model_saved_path=model_path, labels_path=labels_path, fix_ratio=config_model.fix_ratio)
   if randomize:  # randomize the network!
     sess.run(tf.global_variables_initializer())
   return mymodel

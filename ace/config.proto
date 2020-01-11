@@ -5,6 +5,7 @@ message Config {
     string model_wrapper_class = 1;
     string model_path = 2;
     string labels_path = 3;
+    bool fix_ratio = 4;
   }
   Model model = 1;
 
