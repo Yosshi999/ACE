@@ -34,7 +34,7 @@ def setup_logger(working_dir):
 
 
 def main(args):
-  config = ace.config.load(args.config)
+  config = ace.config.load(args.config, args.config_overrides)
   source_dir = config.source_dir
   test_dir = config.test_dir
   working_dir = args.working_dir
@@ -124,6 +124,7 @@ def parse_arguments(argv):
   parser.add_argument('--min_imgs', type=int,
       help="Minimum number of images in a discovered concept",
                       default=40)
+  parser.add_argument('config_overrides', nargs=argparse.REMAINDER)
   return parser.parse_args(argv)
 
 
