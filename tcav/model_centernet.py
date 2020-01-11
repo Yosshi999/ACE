@@ -40,6 +40,7 @@ class CenterNetWrapper(PublicModelWrapper):
   def run_imgs(self, imgs, bottleneck_name):
     def run_img(img):
       logger.debug('img.shape: {}'.format(img.shape))
+      img = img[:, :, ::-1]
       input_h, input_w = self.opt.input_h, self.opt.input_w
       if self.fix_ratio:
         trans_input = cv2.getAffineTransform(
