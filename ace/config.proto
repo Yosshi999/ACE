@@ -6,6 +6,7 @@ message Config {
     string model_path = 2;
     string labels_path = 3;
     bool fix_ratio = 4;
+    string config_path = 5;
   }
   Model model = 1;
 

@@ -388,3 +388,8 @@ class FasterRCNNWrapper(PublicModelWrapper):
 def loadCenterNetWrapper():
     from tcav.model_centernet import CenterNetWrapper
     return CenterNetWrapper
+
+
+def loadFasterRCNNR50C4Wrapper():
+    from tcav.model_detectron2 import FasterRCNNR50C4Wrapper
+    return FasterRCNNR50C4Wrapper

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class CenterNetWrapper(PublicModelWrapper):
   do_not_use_tf_session = True
 
-  def __init__(self, sess, model_saved_path, labels_path, fix_ratio):
+  def __init__(self, sess, model_saved_path, labels_path, fix_ratio, **_):
     with open(labels_path) as f:
       self.labels = f.read().splitlines()
     self.image_shape = [600, 600, 3]  # TODO
