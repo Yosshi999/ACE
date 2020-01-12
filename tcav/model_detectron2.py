@@ -58,6 +58,7 @@ class FasterRCNNR50C4Wrapper(PublicModelWrapper):
         model = self.model
         images = model.preprocess_image([{'image': img}])
         features = model.backbone(images.tensor)
+        features = [features[f] for f in model.roi_heads.in_features]
         x = model.roi_heads.pooler(features, [Boxes(torch.tensor([[0, 0, input_x, input_y]], dtype=torch.float32, device=model.device))])
         x = model.roi_heads.res5[:res5_i](x)
         return x.cpu().numpy().transpose(0, 2, 3, 1)
