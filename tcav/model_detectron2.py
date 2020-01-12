@@ -1,6 +1,7 @@
 import logging
 import re
 
+import cv2
 import numpy as np
 import torch
 from PIL import Image
@@ -50,7 +51,7 @@ class FasterRCNNR50C4Wrapper(PublicModelWrapper):
         transform = T.ResizeTransform(*img.shape[:2], *[self.cfg.INPUT.MIN_SIZE_TEST]*2, Image.BILINEAR)
       else:
         transform = self.transform_gen.get_transform(img)
-      img = transform.apply_image(img)
+      img = apply_image(transform, img)
       input_y, input_x = img.shape[:2]
       with torch.no_grad():
         img = torch.as_tensor(img.astype('float32').transpose(2, 0, 1))
@@ -62,3 +63,15 @@ class FasterRCNNR50C4Wrapper(PublicModelWrapper):
         return x.cpu().numpy().transpose(0, 2, 3, 1)
 
     return np.concatenate([run_img(img) for img in imgs])
+
+
+def apply_image(self: T.ResizeTransform, img):
+  assert img.shape[:2] == (self.h, self.w)
+  assert self.interp == Image.BILINEAR
+  trans_input = cv2.getAffineTransform(
+      np.array([[0, 0], [self.w, 0], [0, self.h]], dtype=np.float32),
+      np.array([[0, 0], [self.new_w, 0], [0, self.new_h]], dtype=np.float32))
+  img = cv2.warpAffine(img, trans_input,
+                       (self.new_w, self.new_h),
+                       flags=cv2.INTER_LINEAR)
+  return img
