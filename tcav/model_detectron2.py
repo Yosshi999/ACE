@@ -52,7 +52,7 @@ class FasterRCNNR50C4Wrapper(PublicModelWrapper):
     loss_cls.backward()
     return x.grad.cpu().numpy().transpose(0, 2, 3, 1)
 
-  def run_imgs(self, imgs, bottleneck_name):
+  def run_imgs(self, imgs, bottleneck_name, _boxes=None):
     match = re.fullmatch('res5_([0-3])', bottleneck_name)
     assert match
     res5_i = int(match.group(1))
@@ -66,13 +66,19 @@ class FasterRCNNR50C4Wrapper(PublicModelWrapper):
         transform = self.transform_gen.get_transform(img)
       img = apply_image(transform, img)
       input_y, input_x = img.shape[:2]
+      if _boxes is None:
+        boxes = [[0, 0, input_x, input_y]]
+      else:
+        boxes = np.asarray(_boxes).reshape(-1, 2)
+        boxes = transform.apply_coords(boxes)
+        boxes = boxes.reshape(-1, 4)
       with torch.no_grad():
         img = torch.as_tensor(img.astype('float32').transpose(2, 0, 1))
         model = self.model
         images = model.preprocess_image([{'image': img}])
         features = model.backbone(images.tensor)
         features = [features[f] for f in model.roi_heads.in_features]
-        x = model.roi_heads.pooler(features, [Boxes(torch.tensor([[0, 0, input_x, input_y]], dtype=torch.float32, device=model.device))])
+        x = model.roi_heads.pooler(features, [Boxes(torch.tensor(boxes, dtype=torch.float32, device=model.device))])
         x = model.roi_heads.res5[:res5_i](x)
         return x.cpu().numpy().transpose(0, 2, 3, 1)
 
