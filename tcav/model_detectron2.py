@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image
+from torch.nn import functional as F
 
 from tcav.model import PublicModelWrapper
 # Detectron2
@@ -37,7 +38,19 @@ class FasterRCNNR50C4Wrapper(PublicModelWrapper):
           [cfg.INPUT.MIN_SIZE_TEST, cfg.INPUT.MIN_SIZE_TEST], cfg.INPUT.MAX_SIZE_TEST)
 
   def get_gradient(self, acts, y, bottleneck_name):
-    return np.zeros_like(acts)  # TODO
+    match = re.fullmatch('res5_([0-3])', bottleneck_name)
+    assert match
+    res5_i = int(match.group(1))
+
+    model = self.model
+    y = torch.tensor(y, device=model.device)
+    x = torch.as_tensor(acts.transpose(0, 3, 1, 2), device=model.device).requires_grad_()
+    box_features = model.roi_heads.res5[res5_i:](x)
+    feature_pooled = box_features.mean(dim=[2, 3])
+    pred_class_logits, _ = model.roi_heads.box_predictor(feature_pooled)
+    loss_cls = F.cross_entropy(pred_class_logits, y, reduction="mean")
+    loss_cls.backward()
+    return x.grad.cpu().numpy().transpose(0, 2, 3, 1)
 
   def run_imgs(self, imgs, bottleneck_name):
     match = re.fullmatch('res5_([0-3])', bottleneck_name)
