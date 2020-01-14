@@ -19,7 +19,6 @@ import sklearn.metrics.pairwise as metrics
 import tensorflow as tf
 from PIL import Image
 
-import ace.slic
 from tcav import cav, tcav_helpers
 
 logger = logging.getLogger(__name__)
