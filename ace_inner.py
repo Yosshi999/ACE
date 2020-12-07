@@ -35,5 +35,5 @@ for fn in tqdm(sorted(Path(input_dir).iterdir())):
     g = f.create_group('/' + fn.stem)
     for cav_name, cav in cavs:
         inner = np.dot(grad_of_image, cav)
-        g.create_dataset(name=cav_name, data=inner, compression="gzip")
+        g.create_dataset(name=cav_name, data=inner)
 f.close()
