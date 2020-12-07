@@ -18,15 +18,17 @@ limitations under the License.
 Class for constructing concept activation vector (CAV) for TCAV """
 import os.path
 import pickle
+from collections import namedtuple
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from sklearn import linear_model
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 from tcav import utils
 
+HParams = namedtuple('HParams', ['model_type', 'alpha'])
 
 class CAV(object):
   """CAV class contains methods for concept activation vector (CAV).
@@ -45,7 +47,7 @@ class CAV(object):
     Returns:
       TF.HParams for training.
     """
-    return tf.contrib.training.HParams(model_type='linear', alpha=.01)
+    return HParams('linear', .01)
 
   @staticmethod
   def load_cav(cav_path):

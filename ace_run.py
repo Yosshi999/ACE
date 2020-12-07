@@ -8,6 +8,8 @@ import sys
 
 import logzero
 import tensorflow as tf
+import tensorflow.compat.v1.gfile as gfile
+tf.gfile = gfile
 
 import ace.config
 from ace import ace_helpers

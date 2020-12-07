@@ -638,8 +638,7 @@ class ConceptDiscovery(object):
     """
     if directory is None:
       directory = self.cav_dir
-    params = tf.contrib.training.HParams(model_type='linear', alpha=.01)
-    cav_key = cav.CAV.cav_key([c, r], bn, params.model_type, params.alpha)
+    cav_key = cav.CAV.cav_key([c, r], bn, 'linear', .01)
     cav_path = os.path.join(self.cav_dir, cav_key.replace('/', '.') + '.pkl')
     vector = cav.CAV.load_cav(cav_path).cavs[0]
     return np.expand_dims(vector, 0) / np.linalg.norm(vector, ord=2)
