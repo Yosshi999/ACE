@@ -7,14 +7,15 @@ from tqdm import tqdm
 
 # Detectron2
 from detectron2.modeling.matcher import Matcher
-from detectron2.structures.boxes import Boxes, pairwise_iou
+from detectron2.structures.boxes import Boxes, pairwise_iou, BoxMode
 
 parser = argparse.ArgumentParser()
 parser.add_argument('target_class', help='person')
 parser.add_argument('gt', help='~/git/CenterNet/data/bdd/detection_val.json')
 parser.add_argument('det', help='~/git/detectron2_v/experiments/002/inference/bdd_val/coco_instances_results_bdd.json')
 parser.add_argument('working_dir', help='output evals')
-parser.add_argument('--iou', type=float, default=0.75, help='iou threshold')
+parser.add_argument('--pos', type=float, default=0.5, help='iou threshold')
+parser.add_argument('--neg', type=float, default=0.3, help='iou threshold')
 args = parser.parse_args()
 
 output_dir = os.path.join(args.working_dir, 'data2')
@@ -40,7 +41,7 @@ def load_names_and_boxeses(target_class, json_filename, keep_empty):
             name = det['name']
             boxes = []
         if det['category'] == target_class:
-            boxes.append(det['bbox'])
+            boxes.append(BoxMode.convert(det['bbox'], BoxMode.XYWH_ABS, BoxMode.XYXY_ABS))
     names.append(name)
     boxeses.append(boxes)
     assert len(names) == len(boxeses)
@@ -57,7 +58,7 @@ def iou(gt_boxes, det_boxes):
 gt_names, gt_boxeses = load_names_and_boxeses(args.target_class, args.gt, True)
 det_names, det_boxeses = load_names_and_boxeses(args.target_class, args.det, False)
 gt = {name: boxes for name, boxes in zip(gt_names, gt_boxeses)}
-matcher = Matcher([args.iou], [0, 1])
+matcher = Matcher([args.neg, args.pos], [0,-1, 1])
 results = []
 for i, name in enumerate(tqdm(det_names)):
     gt_boxes = gt[name]
@@ -65,6 +66,6 @@ for i, name in enumerate(tqdm(det_names)):
     if gt_boxes:
         matrix = iou(gt_boxes, det_boxes)
         _, evals_of_image = matcher(matrix)
-        results.append({'name': name, 'dets': det_boxes, 'gts': gt_boxes, 'dets_eval': evals_of_image})
+        results.append({'name': name, 'dets': det_boxes, 'gts': gt_boxes, 'dets_eval': evals_of_image.numpy().tolist()})
 with open(os.path.join(output_dir, 'evaluate.json'), 'w') as f:
     json.dump({'category': args.target_class, 'results': results}, f)
