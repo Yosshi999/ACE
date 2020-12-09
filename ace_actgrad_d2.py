@@ -67,6 +67,7 @@ def load_img(i):
     return i, np.array(PIL.Image.open(os.path.join(args.image_dir, names[i])))
 
 class_id = model.label_to_id(config.target_class.replace('_', ' '))
+print(class_id)
 for i in tqdm(range(len(names))):
     i, img = load_img(i)
     act = model.run_imgs([img], config.bottlenecks[0], boxeses[i])

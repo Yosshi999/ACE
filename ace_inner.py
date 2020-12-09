@@ -27,11 +27,13 @@ for fn in tqdm(sorted(Path(args.cav_dir).iterdir())):
         cav = ConceptDiscovery.load_cav_direction(args, c, r, bn)
         cav = cav.squeeze().astype(np.float32)
         cavs.append((fn.stem, cav))
+print("cav shape:", cavs[0][1].shape)
 
 print("calc grad cav")
 f = h5py.File(os.path.join(output_dir, "inner.hdf5"), "w")
 for fn in tqdm(sorted(Path(input_dir).iterdir())):
     grad_of_image = np.load(os.path.join(input_dir, fn.name)) # (dets, grad vector)
+    grad_of_image = grad_of_image / np.linalg.norm(grad_of_image, axis=-1, keepdims=True)
     g = f.create_group('/' + fn.stem)
     for cav_name, cav in cavs:
         inner = np.dot(grad_of_image, cav)
