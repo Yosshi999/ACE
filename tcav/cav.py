@@ -182,7 +182,7 @@ class CAV(object):
       self.cavs = [-1 * lm.coef_[0], lm.coef_[0]]
     else:
       self.cavs = [c for c in lm.coef_]
-    self.lm_params = lm.get_params()
+    self.lm = lm
     self._save_cavs()
 
   def perturb_act(self, act, concept, operation=np.add, alpha=1.0):
@@ -226,7 +226,7 @@ class CAV(object):
         'hparams': self.hparams,
         'accuracies': self.accuracies,
         'cavs': self.cavs,
-        'lm_params': self.lm_params,
+        'lm': self.lm,
         'saved_path': self.save_path
     }
     if self.save_path is not None:
