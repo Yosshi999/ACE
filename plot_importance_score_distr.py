@@ -74,5 +74,5 @@ plt.errorbar(X, innerTP.mean(0), fmt='o', yerr=innerTP.std(0))
 plt.errorbar(X + 0.1, innerFP.mean(0), fmt='o', yerr=innerFP.std(0))
 plt.legend(['tp', 'fp'])
 plt.xticks(range(1, 21))
-plt.savefig("concept_stat.png")
+plt.savefig(os.path.join(args.working_dir, "concept_stat.png"))
 
