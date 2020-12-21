@@ -6,6 +6,7 @@ from pathlib import Path
 import PIL.Image
 import numpy as np
 from tqdm import tqdm
+import h5py
 
 import ace.config
 from ace import ace_helpers
@@ -32,7 +33,7 @@ with open(args.det) as f:
 
 assert ('name' in dets[0]) and ('category' in dets[0]) and "det results must have name&category. See git/detectron2/tools/append_mapped_dets.py"
 
-output_dir = os.path.join(args.working_dir, 'data4_grad')
+output_dir = os.path.join(args.working_dir, 'data3_act')
 # Make a destination directory. If it already exists, raise an error.
 os.mkdir(output_dir)
 
@@ -67,14 +68,11 @@ print('n_cpu:', n_cpu, flush=True)
 def load_img(i):
     return i, np.array(PIL.Image.open(os.path.join(args.image_dir, names[i])))
 
-class_id = model.label_to_id(config.target_class.replace('_', ' '))
-print(class_id)
-for i in tqdm(range(len(names))):
-    i, img = load_img(i)
-    act = model.run_imgs([img], config.bottlenecks[0], boxeses[i])
-    n_det = len(boxeses[i])
-    grad = model.get_gradient(act, np.repeat(class_id, n_det), config.bottlenecks[0])
-    if args.channel_mean_cav:
-        grad = grad.mean((1,2))
-    grad = grad.reshape(n_det, -1)
-    np.save(os.path.join(output_dir, Path(names[i]).stem + ".npy"), grad, allow_pickle=False)
+with h5py.File(os.path.join(output_dir, 'act.h5'), "w") as f:
+    for i in tqdm(range(len(names))):
+        i, img = load_img(i)
+        act = model.run_imgs([img], config.bottlenecks[0], boxeses[i])
+        if args.channel_mean_cav:
+            act = act.mean((1,2))
+        f.create_dataset(name=Path(names[i]).stem, data=act)
+        #np.save(os.path.join(output_dir, Path(names[i]).stem + '.npy'), act, allow_pickle=False)

@@ -89,7 +89,8 @@ def main(args):
       num_discovery_imgs=max_imgs,
       num_workers=config.num_workers,
       resize_images=config.resize_images,
-      resize_patches=config.resize_patches)
+      resize_patches=config.resize_patches,
+      channel_mean_cav=args.channel_mean_cav)
   # Creating the dataset of image patches
   cd.create_patches(param_dict={'n_segments': list(config.slic.n_segments), 'n_segments_reference_area': config.slic.n_segments_reference_area})
   # Discovering Concepts
@@ -127,6 +128,7 @@ def parse_arguments(argv):
   parser.add_argument('--min_imgs', type=int,
       help="Minimum number of images in a discovered concept",
                       default=40)
+  parser.add_argument('--channel_mean_cav', action='store_true')
   parser.add_argument('config_overrides', nargs=argparse.REMAINDER)
   return parser.parse_args(argv)
 

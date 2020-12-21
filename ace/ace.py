@@ -51,7 +51,8 @@ class ConceptDiscovery(object):
                num_workers=20,
                resize_images=True,
                resize_patches=True,
-               average_image_value=117):
+               average_image_value=117,
+               channel_mean_cav=False):
     """Runs concept discovery for a given class in a trained model.
 
     For a trained classification model, the ConceptDiscovery class first
@@ -94,6 +95,7 @@ class ConceptDiscovery(object):
       resize_patches: Whether to resize patches or not.
       average_image_value: The average value used for mean subtraction in the
                            nework's preprocessing stage.
+      channel_mean_cav: If true, for the TCAV the activations and gradients are averaged over channels
     """
     self.model = model
     self.sess = sess
@@ -110,6 +112,7 @@ class ConceptDiscovery(object):
     self.activation_dir = activation_dir
     self.cav_dir = cav_dir
     self.channel_mean = channel_mean
+    self.channel_mean_cav = channel_mean_cav
     self.random_concept = random_concept
     self.image_shape = model.get_image_shape()[:2]
     self.max_imgs = max_imgs
@@ -522,6 +525,8 @@ class ConceptDiscovery(object):
     if not tf.gfile.Exists(rnd_acts_path):
       rnd_imgs = self.load_concept_imgs(random_concept, self.max_imgs)
       acts = tcav_helpers.get_acts_from_images(rnd_imgs, self.model, bottleneck)
+      if self.channel_mean_cav:
+        acts = acts.mean((1,2))
       with tf.gfile.Open(rnd_acts_path, 'wb') as f:
         np.save(f, acts, allow_pickle=False)
       del acts
@@ -610,11 +615,15 @@ class ConceptDiscovery(object):
         concept_imgs = self.dic[bn][concept]['images']
         concept_acts = tcav_helpers.get_acts_from_images(
             concept_imgs, self.model, bn)
+        if self.channel_mean_cav:
+          concept_acts = concept_acts.mean((1,2))
         acc[bn][concept] = self._concept_cavs(bn, concept, concept_acts, ow=ow)
         if np.mean(acc[bn][concept]) < min_acc:
           concepts_to_delete.append((bn, concept))
       target_class_acts = tcav_helpers.get_acts_from_images(
           self.discovery_images, self.model, bn)
+      if self.channel_mean_cav:
+        target_class_acts = target_class_acts.mean((1,2))
       acc[bn][self.target_class] = self._concept_cavs(
           bn, self.target_class, target_class_acts, ow=ow)
       rnd_acts = self._random_concept_activations(bn, self.random_concept)
@@ -669,8 +678,10 @@ class ConceptDiscovery(object):
       acts = tcav_helpers.get_acts_from_images(images, self.model, bn)
       bn_grads = np.zeros((acts.shape[0], np.prod(acts.shape[1:])))
       for i in range(len(acts)):
-        bn_grads[i] = self.model.get_gradient(
-            acts[i:i+1], [class_id], bn).reshape(-1)
+        grad = self.model.get_gradient(acts[i:i+1], [class_id], bn)
+        if self.channel_mean_cav:
+          grad = grad.mean((1,2))
+        bn_grads[i] = grad.reshape(-1)
       gradients[bn] = bn_grads
     return gradients
 
