@@ -676,7 +676,10 @@ class ConceptDiscovery(object):
     class_id = self.model.label_to_id(self.target_class.replace('_', ' '))
     for bn in self.bottlenecks:
       acts = tcav_helpers.get_acts_from_images(images, self.model, bn)
-      bn_grads = np.zeros((acts.shape[0], np.prod(acts.shape[1:])))
+      if self.channel_mean_cav:
+        bn_grads = np.zeros((acts.shape[0], acts.shape[-1]))
+      else:
+        bn_grads = np.zeros((acts.shape[0], np.prod(acts.shape[1:])))
       for i in range(len(acts)):
         grad = self.model.get_gradient(acts[i:i+1], [class_id], bn)
         if self.channel_mean_cav:
