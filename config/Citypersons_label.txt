@@ -1,0 +1,4 @@
+pedestrian
+rider
+sitting person
+person (other)
