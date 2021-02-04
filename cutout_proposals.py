@@ -107,7 +107,7 @@ def return_superpixel_patches(image: np.ndarray) -> Tuple[List[np.ndarray], List
     patches = []
     bboxes = []
     masks = []
-    for p, b, m in [extract_patch(image, _mask) for _mask in unique_masks]:
+    for p, b, m in map(lambda _mask: extract_patch(image, _mask), unique_masks):
         patches.append(p)
         bboxes.append(b)
         masks.append(m)
@@ -207,49 +207,45 @@ def create_df(anns: List[dict], image: Image, model, bottleneck: str, lmtest: LM
     return ret
  
 def create_df_worker(args):
-    logger.debug("df worker")
-    anns, image, image_idx = args
-    rets = []
-    for ann in anns:
-        x,y,w,h = ann['bbox']
-        crop_image = image.crop((x, y, x+w, y+h))
-        crop_image = np.asarray(crop_image).astype(np.float32) / 255.0
-        rets.append(return_superpixel_patches(crop_image))
-    logger.debug("df worker end")
-    return rets, image_idx, anns
+    """parallelizable jobs"""
+    ann, image, image_idx = args
+    x,y,w,h = ann['bbox']
+    crop_image = image.crop((x, y, x+w, y+h))
+    crop_image = np.asarray(crop_image).astype(np.float32) / 255.0
+    ret = return_superpixel_patches(crop_image)
+    return ret, image_idx, ann
 
-def create_df_single(interm, model, bottleneck, lmtest, anns):
-    logger.debug("df single")
-    ret = {
-        'annot_id': [],
-        'bbox': [],
-        'concept': [],
-        'rlemask': []
-    }
-    acts_list = []
-    inners_list = []
-    logger.debug("df single: model")
-    for (superpixels, bboxes, masks) in interm:
-        acts = model.run_imgs(superpixels, bottleneck)
-        acts_list.append(acts)
-    logger.debug("df single: lmtest")
-    for acts in acts_list:
+class CreateDFSingle:
+    def __init__(self, model, bottleneck, lmtest):
+        self.model = model
+        self.bottleneck = bottleneck
+        self.lmtest = lmtest
+        self.reset()
+    def get_df(self):
+        return self.ret
+    def reset(self):
+        self.ret = {
+            'annot_id': [],
+            'bbox': [],
+            'concept': [],
+            'rlemask': []
+        }
+    def __call__(self, interm, ann):
+        superpixels, bboxes, masks = interm
+        acts = self.model.run_imgs(superpixels, self.bottleneck)
+
         ## channel mean
         # acts = np.mean(acts, (1, 2))
         # just flatten
         acts = np.reshape(acts, [acts.shape[0], -1])
-        inners = lmtest.test(acts)
-        inners_list.append(inners)
-    logger.debug("df single: dict")
-    for (_superpixels, bboxes, masks), inners, ann in zip(interm, inners_list, anns):
+        inners = self.lmtest.test(acts)
         for inner, bbox, mask in zip(inners, bboxes, masks):
             if inner is None:
                 continue 
-            ret['annot_id'].append(ann['id'])
-            ret['bbox'].append(bbox)
-            ret['concept'].append(inner)
-            ret['rlemask'].append(maskUtils.encode(np.asfortranarray(mask.astype(np.uint8))))
-    return ret
+            self.ret['annot_id'].append(ann['id'])
+            self.ret['bbox'].append(bbox)
+            self.ret['concept'].append(inner)
+            self.ret['rlemask'].append(maskUtils.encode(np.asfortranarray(mask.astype(np.uint8))))
 
 if __name__ == '__main__':
     #setup_logger(args.working_dir)
@@ -284,20 +280,30 @@ if __name__ == '__main__':
     else:
         if args.worker == -1:
             args.worker = os.cpu_count()
-        def preprocess_single(args):
-            image_idx, image_info = args
-            ann_indice = api.getAnnIds([image_idx])
-            anns = api.loadAnns(ann_indice)
-            return anns, Image.open(IMGROOT / image_info['file_name']), image_idx
+        def preprocess_single_gen(args_list):
+            for args in args_list:
+                image_idx, image_info = args
+                ann_indice = api.getAnnIds([image_idx])
+                anns = api.loadAnns(ann_indice)
+                im = Image.open(IMGROOT / image_info['file_name'])
+                for an in anns:
+                    yield an, im, image_idx
         with Pool(args.worker) as p:
-            mapper = map(preprocess_single, api.imgs.items())
-            for interm, image_idx, anns in tqdm(p.imap_unordered(create_df_worker, mapper), total=len(list(api.imgs.keys()))):
+            mapper = preprocess_single_gen(api.imgs.items())
+            create_df_single = CreateDFSingle(model, config.bottlenecks[0], lmtest)
+            prev_idx = None
+            for interm, image_idx, ann in tqdm(p.imap(create_df_worker, mapper), total=len(list(api.anns.keys()))):
                 global_step += 1
                 if global_step % 100:
                     logger.debug(lmtest.stat)
-                df = create_df_single(interm, model, config.bottlenecks[0], lmtest, anns)
-                with (WORKDIR / ('image%d.pickle' % image_idx)).open('wb') as f:
-                    pickle.dump(df, f)
+                if prev_idx is None:
+                    prev_idx = image_idx
+                elif prev_idx != image_idx:
+                    with (WORKDIR / ('image%d.pickle' % prev_idx)).open('wb') as f:
+                        pickle.dump(create_df_single.get_df(), f)
+                    prev_idx = image_idx
+                    create_df_single.reset()
+                create_df_single(interm, ann)
         #mapper = map(preprocess_single, api.imgs.items())
         #for interm, image_idx in tqdm(map(create_df_worker, mapper), total=len(list(api.imgs.keys()))):
         #    df = create_df_single(interm, model, config.bottlenecks[0], lmtest)
